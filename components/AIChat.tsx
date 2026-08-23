@@ -3,12 +3,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useCanvasStore } from '../store/useCanvasStore';
 import type { ChatSource } from '../store/useCanvasStore';
-import { Send, Mic, Sparkles, User as UserIcon, StopCircle, RefreshCw, AlertCircle, Globe, ExternalLink, Loader2, FileText, Upload } from 'lucide-react';
+import { Send, Mic, Sparkles, User as UserIcon, StopCircle, RefreshCw, AlertCircle, Globe, ExternalLink, Loader2, FileText, Upload, Trash2 } from 'lucide-react';
 import type { fabric } from 'fabric';
 import { mockWebSearch, mockDocumentAnalysis } from '../lib/mockServices';
 
 export default function AIChat() {
-  const { messages, addMessage, updateMessage, isLeftPanelOpen, isGenerating, setIsGenerating, canvas, saveHistory, isRightPanelOpen } = useCanvasStore();
+  const { messages, addMessage, clearMessages, updateMessage, isLeftPanelOpen, isGenerating, setIsGenerating, canvas, saveHistory, isRightPanelOpen } = useCanvasStore();
   
   const [input, setInput] = useState('');
   const [isListening, setIsListening] = useState(false);
@@ -18,6 +18,7 @@ export default function AIChat() {
   const recognitionRef = useRef<any>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const generationIdRef = useRef(0);
   
   // Auto scroll
   useEffect(() => {
@@ -253,6 +254,7 @@ export default function AIChat() {
       addMessage({ role: 'user', content: query });
       setInput('');
     }
+    const generationId = ++generationIdRef.current;
     setIsGenerating(true);
 
     const messageId = Date.now().toString();
@@ -265,12 +267,15 @@ export default function AIChat() {
       let currentText = '';
       
       for (let i = 0; i < words.length; i++) {
+        if (generationId !== generationIdRef.current) return;
         currentText += words[i] + ' ';
         updateMessage(messageId, currentText);
         await new Promise(r => setTimeout(r, 30));
       }
 
       updateMessage(messageId, response, { sources, searchMode });
+
+      if (generationId !== generationIdRef.current) return;
 
       if (action) {
         try {
@@ -287,6 +292,17 @@ export default function AIChat() {
     } finally {
       setIsGenerating(false);
     }
+  };
+
+  const stopGeneration = () => {
+    generationIdRef.current += 1;
+    setIsGenerating(false);
+  };
+
+  const handleClearChat = () => {
+    generationIdRef.current += 1;
+    setIsGenerating(false);
+    clearMessages();
   };
 
   const createNodeGroup = (fabricAPI: typeof fabric, text: string, left: number, top: number) => {
@@ -309,6 +325,22 @@ export default function AIChat() {
     <div className={`w-80 bg-white border-l border-slate-200 h-full flex flex-col shadow-sm absolute right-0 md:relative z-20 transition-transform duration-300 ${isRightPanelOpen ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}`}>
       
       <div className="p-3 border-b border-slate-100 bg-slate-50">
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <h2 className="text-sm font-semibold text-slate-800">AI Canvas Assistant</h2>
+            <p className="text-[11px] text-slate-500">Turn ideas into canvas objects</p>
+          </div>
+          <button
+            type="button"
+            onClick={handleClearChat}
+            disabled={messages.length === 0 || isGenerating}
+            title="Clear chat"
+            aria-label="Clear chat"
+            className="p-1.5 rounded-md text-slate-400 hover:text-red-600 hover:bg-red-50 disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-slate-400"
+          >
+            <Trash2 size={15} />
+          </button>
+        </div>
         <div className="flex gap-1 bg-white p-1 rounded-lg border border-slate-200 shadow-sm">
           <button 
             onClick={() => setChatMode('standard')} 
@@ -372,7 +404,11 @@ export default function AIChat() {
               
               {msg.role === 'error' && (
                 <button 
-                  onClick={() => handleSend(undefined, messages[messages.length - 2].content)}
+                  onClick={() => {
+                    const messageIndex = messages.findIndex((message) => message.id === msg.id);
+                    const previousMessage = messages[messageIndex - 1];
+                    if (previousMessage?.role === 'user') handleSend(undefined, previousMessage.content);
+                  }}
                   className="mt-2 text-xs flex items-center gap-1 font-medium bg-red-100 hover:bg-red-200 px-2 py-1 rounded transition-colors"
                 >
                   <RefreshCw size={10} /> Retry
@@ -411,13 +447,25 @@ export default function AIChat() {
               >
                 <Mic size={16} />
               </button>
-              <button 
-                type="submit" 
-                disabled={(!input.trim() && !isListening) || isGenerating} 
-                className="p-1.5 bg-blue-600 text-white hover:bg-blue-700 rounded-full transition-colors disabled:opacity-50 disabled:hover:bg-blue-600"
-              >
-                <Send size={16} />
-              </button>
+              {isGenerating ? (
+                <button
+                  type="button"
+                  onClick={stopGeneration}
+                  title="Stop generating"
+                  aria-label="Stop generating"
+                  className="p-1.5 bg-slate-800 text-white hover:bg-slate-700 rounded-full transition-colors"
+                >
+                  <StopCircle size={16} />
+                </button>
+              ) : (
+                <button 
+                  type="submit" 
+                  disabled={!input.trim() && !isListening} 
+                  className="p-1.5 bg-blue-600 text-white hover:bg-blue-700 rounded-full transition-colors disabled:opacity-50 disabled:hover:bg-blue-600"
+                >
+                  <Send size={16} />
+                </button>
+              )}
             </div>
           </div>
         </form>

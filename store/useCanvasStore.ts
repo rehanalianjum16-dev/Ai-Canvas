@@ -52,6 +52,7 @@ interface CanvasState {
 
   messages: ChatMessage[];
   addMessage: (msg: Omit<ChatMessage, 'id'> & { id?: string }) => void;
+  clearMessages: () => void;
   updateMessage: (id: string, content: string, details?: Pick<ChatMessage, 'sources' | 'searchMode'>) => void;
   
   isGenerating: boolean;
@@ -167,6 +168,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
   addMessage: (msg) => set((state) => ({ 
     messages: [...state.messages, { ...msg, id: msg.id || Date.now().toString() }] 
   })),
+  clearMessages: () => set({ messages: [] }),
   updateMessage: (id, content, details) => set((state) => ({
     messages: state.messages.map(m => m.id === id ? { ...m, content, ...details } : m)
   })),
