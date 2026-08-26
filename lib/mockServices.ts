@@ -29,6 +29,7 @@ const detectResponseLanguage = (query: string): string => {
   if (/[\u0600-\u06ff]/.test(query)) return /[\u0679\u0686\u0698\u06af]/.test(query) ? 'ur' : 'ar';
   if (/[\u0900-\u097f]/.test(query)) return 'hi';
   const lowerQuery = query.toLowerCase();
+  if (/\b(jis|mrzi|mujhe|aap|apko|mein|mn|kry|karo|karen|den|do|chahiye|bana|bna)\b/.test(lowerQuery)) return 'ur';
   if (/\b(que|qué|como|cómo|para|por favor|quiero|crear)\b/.test(lowerQuery)) return 'es';
   if (/\b(comment|pour|avec|bonjour|créer|créez)\b/.test(lowerQuery)) return 'fr';
   return 'en';
@@ -36,7 +37,18 @@ const detectResponseLanguage = (query: string): string => {
 
 export const localizeChatResponse = (query: string, response: string): string => {
   const language = detectResponseLanguage(query);
-  return translations[language]?.[response] || response;
+  const translated = translations[language]?.[response];
+  if (translated) return translated;
+
+  if (language === 'ur') {
+    if (/^Added a rectangle named /.test(response)) return response.replace(/^Added a rectangle named /, 'میں نے یہ مستطیل شامل کیا: ');
+    if (response === 'Moved the object to the right.') return 'آبجیکٹ کو دائیں طرف منتقل کر دیا گیا ہے۔';
+    if (response === "Changed the selected object's color to blue.") return 'منتخب آبجیکٹ کا رنگ نیلا کر دیا گیا ہے۔';
+    if (response === 'Deleted the selected object.') return 'منتخب آبجیکٹ حذف کر دیا گیا ہے۔';
+    if (response.includes("didn't understand that command")) return 'معذرت، میں یہ کمانڈ سمجھ نہیں سکا۔ شکل شامل کرنے، کوڈ بنانے یا ڈایاگرام تیار کرنے کو کہیں۔';
+  }
+
+  return response;
 };
 
 export const mockWebSearch = async (query: string): Promise<{ text: string; sources: ChatSource[] }> => {
