@@ -88,7 +88,13 @@ export default function AIChat() {
   };
 
   const processAICommand = async (userMessage: string) => {
-    const msg = userMessage.toLowerCase();
+    const msg = userMessage.toLowerCase()
+      .replace(/\b(bana do|bna do|bana dein|bna dein|add kro|add kar do|kardo|karo|kry|bana|bna)\b/g, ' add ')
+      .replace(/\b(daen|dayen|right side)\b/g, ' right ')
+      .replace(/\b(hata do|delete kro|remove kro)\b/g, ' delete ')
+      .replace(/\b(neela|nila)\b/g, ' blue ')
+      .replace(/\s+/g, ' ')
+      .trim();
     await new Promise(resolve => setTimeout(resolve, 500));
 
     if (chatMode === 'web') {
@@ -173,6 +179,37 @@ export default function AIChat() {
         const group = createNodeGroup(fabricAPI, name, canvas.getWidth()/2 - 60, canvas.getHeight()/2 - 25);
         canvas.add(group);
         canvas.setActiveObject(group);
+      };
+    }
+    else if (msg.includes("circle") || msg.includes("oval")) {
+      response = "Added a circle to the canvas.";
+      action = (fabricAPI: typeof fabric) => {
+        const circle = new fabricAPI.Circle({
+          radius: 45,
+          left: canvas.getWidth() / 2 - 45,
+          top: canvas.getHeight() / 2 - 45,
+          fill: '#dbeafe',
+          stroke: '#2563eb',
+          strokeWidth: 2,
+        });
+        canvas.add(circle);
+        canvas.setActiveObject(circle);
+      };
+    }
+    else if (msg.includes("triangle")) {
+      response = "Added a triangle to the canvas.";
+      action = (fabricAPI: typeof fabric) => {
+        const triangle = new fabricAPI.Triangle({
+          width: 90,
+          height: 90,
+          left: canvas.getWidth() / 2 - 45,
+          top: canvas.getHeight() / 2 - 45,
+          fill: '#dcfce7',
+          stroke: '#16a34a',
+          strokeWidth: 2,
+        });
+        canvas.add(triangle);
+        canvas.setActiveObject(triangle);
       };
     }
     else if (msg.includes("connect")) {

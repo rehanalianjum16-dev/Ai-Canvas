@@ -12,6 +12,8 @@ const translations: Record<string, Record<string, string>> = {
     "I generated a React component code block for you.": 'میں نے آپ کے لیے React component کا کوڈ بلاک بنا دیا ہے۔',
     "I've created a School Management ER diagram.": 'میں نے آپ کے لیے اسکول مینجمنٹ ER ڈایاگرام بنا دیا ہے۔',
     'Created a mind map on the canvas.': 'کینوس پر مائنڈ میپ بنا دیا گیا ہے۔',
+    'Added a circle to the canvas.': 'کینوس پر دائرہ شامل کر دیا گیا ہے۔',
+    'Added a triangle to the canvas.': 'کینوس پر مثلث شامل کر دیا گیا ہے۔',
   },
   es: {
     "I've created a basic e-commerce flowchart for you.": 'He creado un diagrama de flujo básico de comercio electrónico para ti.',
