@@ -5,7 +5,7 @@ import { useCanvasStore } from '../store/useCanvasStore';
 import type { ChatSource } from '../store/useCanvasStore';
 import { Send, Mic, Sparkles, User as UserIcon, StopCircle, RefreshCw, AlertCircle, Globe, ExternalLink, Loader2, FileText, Upload, Trash2 } from 'lucide-react';
 import type { fabric } from 'fabric';
-import { mockWebSearch, mockDocumentAnalysis } from '../lib/mockServices';
+import { localizeChatResponse, mockWebSearch, mockDocumentAnalysis } from '../lib/mockServices';
 
 export default function AIChat() {
   const { messages, addMessage, clearMessages, updateMessage, isLeftPanelOpen, isGenerating, setIsGenerating, canvas, saveHistory, isRightPanelOpen } = useCanvasStore();
@@ -263,7 +263,8 @@ export default function AIChat() {
     try {
       const { response, action, sources, searchMode } = await processAICommand(query);
 
-      const words = response.split(' ');
+      const localizedResponse = localizeChatResponse(query, response);
+      const words = localizedResponse.split(' ');
       let currentText = '';
       
       for (let i = 0; i < words.length; i++) {
@@ -273,7 +274,7 @@ export default function AIChat() {
         await new Promise(r => setTimeout(r, 30));
       }
 
-      updateMessage(messageId, response, { sources, searchMode });
+      updateMessage(messageId, localizedResponse, { sources, searchMode });
 
       if (generationId !== generationIdRef.current) return;
 
