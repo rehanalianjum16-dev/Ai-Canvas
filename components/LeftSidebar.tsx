@@ -1,11 +1,11 @@
 "use client";
 
 import React, { useState } from 'react';
-import { FolderOpen, FileText, LayoutTemplate, Settings, Clock, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
+import { FolderOpen, FileText, LayoutTemplate, Settings, Clock, Plus, ChevronLeft, ChevronRight, GitBranch, Network, Database, Layout } from 'lucide-react';
 import { useCanvasStore } from '../store/useCanvasStore';
 
 export default function LeftSidebar() {
-  const { isLeftPanelOpen, setIsLeftPanelOpen, projects, openProject, createNewProject, currentProjectId } = useCanvasStore();
+  const { isLeftPanelOpen, setIsLeftPanelOpen, projects, openProject, createNewProject, currentProjectId, canvas, saveHistory, setIsRightPanelOpen } = useCanvasStore();
   const [activeTab, setActiveTab] = useState<'projects' | 'files' | 'templates' | 'settings'>('projects');
 
   const tabs = [
@@ -14,6 +14,56 @@ export default function LeftSidebar() {
     { id: 'templates', icon: LayoutTemplate, label: 'Templates' },
     { id: 'settings', icon: Settings, label: 'Settings' }
   ];
+
+  const createTemplate = async (template: string) => {
+    if (!canvas) {
+      setIsRightPanelOpen(true);
+      return;
+    }
+
+    const { fabric } = await import('fabric');
+    const centerX = canvas.getWidth() / 2;
+    const centerY = canvas.getHeight() / 2;
+    const makeNode = (label: string, left: number, top: number) => {
+      const box = new fabric.Rect({ width: 150, height: 54, rx: 8, ry: 8, fill: '#eff6ff', stroke: '#2563eb', strokeWidth: 2 });
+      const text = new fabric.IText(label, { left: 75, top: 27, originX: 'center', originY: 'center', fontSize: 14, fill: '#1e3a8a' });
+      return new fabric.Group([box, text], { left, top });
+    };
+    const connect = (fromX: number, fromY: number, toX: number, toY: number) => {
+      const line = new fabric.Line([fromX, fromY, toX, toY], { stroke: '#94a3b8', strokeWidth: 2, selectable: false });
+      canvas.add(line);
+      canvas.sendToBack(line);
+    };
+
+    if (template === 'Flowchart') {
+      ['Start', 'Process', 'Decision', 'Finish'].forEach((label, index) => {
+        const left = centerX - 75;
+        const top = centerY - 130 + index * 85;
+        canvas.add(makeNode(label, left, top));
+        if (index > 0) connect(centerX, top - 31, centerX, top);
+      });
+    } else if (template === 'Mind Map') {
+      canvas.add(makeNode('Central Idea', centerX - 75, centerY - 27));
+      ['Research', 'Plan', 'Create'].forEach((label, index) => {
+        const left = centerX - 255 + index * 170;
+        const top = centerY - 140;
+        canvas.add(makeNode(label, left, top));
+        connect(centerX, centerY - 27, left + 75, top + 54);
+      });
+    } else if (template === 'ER Diagram') {
+      canvas.add(makeNode('Users', centerX - 220, centerY - 27));
+      canvas.add(makeNode('Projects', centerX + 70, centerY - 27));
+      connect(centerX - 70, centerY, centerX + 70, centerY);
+    } else {
+      const frame = new fabric.Rect({ left: centerX - 180, top: centerY - 120, width: 360, height: 240, fill: '#ffffff', stroke: '#64748b', strokeWidth: 2, rx: 10, ry: 10 });
+      const header = new fabric.Rect({ left: centerX - 180, top: centerY - 120, width: 360, height: 42, fill: '#e2e8f0', rx: 10, ry: 10 });
+      const title = new fabric.IText('Wireframe', { left: centerX - 155, top: centerY - 105, fontSize: 16, fill: '#0f172a' });
+      canvas.add(frame, header, title, makeNode('Content', centerX - 75, centerY - 15));
+    }
+
+    canvas.renderAll();
+    saveHistory(canvas);
+  };
 
   return (
     <div 
@@ -100,9 +150,15 @@ export default function LeftSidebar() {
 
             {activeTab === 'templates' && (
               <div className="space-y-2">
-                {['Flowchart', 'Mind Map', 'ER Diagram', 'Wireframe'].map(t => (
-                  <button key={t} className="w-full text-left px-3 py-2 rounded-lg text-sm text-slate-600 hover:bg-slate-50 border border-slate-100 transition-colors">
-                    {t}
+                {[
+                  { name: 'Flowchart', icon: GitBranch },
+                  { name: 'Mind Map', icon: Network },
+                  { name: 'ER Diagram', icon: Database },
+                  { name: 'Wireframe', icon: Layout },
+                ].map(({ name, icon: Icon }) => (
+                  <button key={name} onClick={() => createTemplate(name)} className="w-full text-left px-3 py-2 rounded-lg text-sm text-slate-600 hover:bg-blue-50 hover:text-blue-700 border border-slate-100 transition-colors flex items-center gap-2">
+                    <Icon size={15} />
+                    {name}
                   </button>
                 ))}
               </div>
