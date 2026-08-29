@@ -379,6 +379,10 @@ export default function AIChat() {
             <Trash2 size={15} />
           </button>
         </div>
+        <div className="flex items-center gap-1.5 text-[11px] text-slate-500 mb-3">
+          <span className={`w-1.5 h-1.5 rounded-full ${isGenerating ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500'}`} />
+          {isGenerating ? 'Working on your canvas...' : 'Ready to create'}
+        </div>
         <div className="flex gap-1 bg-white p-1 rounded-lg border border-slate-200 shadow-sm">
           <button 
             onClick={() => setChatMode('standard')} 
@@ -403,6 +407,23 @@ export default function AIChat() {
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {messages.length === 1 && !isGenerating && (
+          <div className="space-y-2">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Try a prompt</p>
+            <div className="grid gap-2">
+              {['Create a flowchart for an ecommerce checkout', 'Add a blue rectangle named Hero', 'Create a mind map about my project'].map((prompt) => (
+                <button
+                  key={prompt}
+                  type="button"
+                  onClick={() => setInput(prompt)}
+                  className="text-left px-3 py-2 rounded-lg border border-slate-200 bg-white text-xs text-slate-600 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                >
+                  {prompt}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
         {messages.map((msg) => (
           <div key={msg.id} className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
             <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-1 ${
@@ -464,7 +485,7 @@ export default function AIChat() {
              <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 rounded-lg border border-slate-200 text-xs text-slate-600">
                 <FileText size={14} className="text-blue-500" />
                 <span className="truncate flex-1">{uploadedFile.name}</span>
-                <button onClick={() => { setUploadedFile(null); setChatMode('standard'); }} className="text-slate-400 hover:text-red-500">x</button>
+                <button type="button" aria-label="Remove uploaded file" onClick={() => { setUploadedFile(null); setChatMode('standard'); }} className="text-slate-400 hover:text-red-500">x</button>
              </div>
           )}
           
@@ -481,6 +502,8 @@ export default function AIChat() {
               <button 
                 type="button" 
                 onClick={toggleListen}
+                  title={isListening ? 'Stop listening' : 'Use voice input'}
+                  aria-label={isListening ? 'Stop listening' : 'Use voice input'}
                 className={`p-1.5 rounded-full transition-colors ${isListening ? 'bg-red-100 text-red-600 animate-pulse' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-200'}`}
               >
                 <Mic size={16} />
