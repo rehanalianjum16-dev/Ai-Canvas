@@ -5,7 +5,7 @@ import { useCanvasStore } from '../store/useCanvasStore';
 import type { ChatSource } from '../store/useCanvasStore';
 import { Send, Mic, Sparkles, User as UserIcon, StopCircle, RefreshCw, AlertCircle, Globe, ExternalLink, Loader2, FileText, Upload, Trash2 } from 'lucide-react';
 import type { fabric } from 'fabric';
-import { localizeChatResponse, mockWebSearch, mockDocumentAnalysis } from '../lib/mockServices';
+import { localizeChatResponse, mockDocumentAnalysis } from '../lib/mockServices';
 
 export default function AIChat() {
   const { messages, addMessage, clearMessages, updateMessage, isLeftPanelOpen, isGenerating, setIsGenerating, canvas, saveHistory, isRightPanelOpen } = useCanvasStore();
@@ -87,6 +87,55 @@ export default function AIChat() {
     }
   };
 
+  const fetchServerChat = async (message: string, mode: 'standard' | 'web' | 'document') => {
+    const result = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message, mode }),
+    });
+
+    if (!result.ok) {
+      const errorData = await result.json().catch(() => ({}));
+      throw new Error(errorData?.error || 'AI service unavailable.');
+    }
+
+    const data = await result.json();
+    return {
+      response: data.response || 'I am ready to help with your canvas.',
+      sources: Array.isArray(data.sources) ? data.sources : [],
+      searchMode: data.mode === 'live' ? 'live' : 'demo',
+    };
+  };
+
+  const fetchWebSearchResults = async (query: string) => {
+    const result = await fetch('/api/web-search', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query }),
+    });
+
+    if (!result.ok) {
+      const errorData = await result.json().catch(() => ({}));
+      throw new Error(errorData?.error || 'Web search service unavailable.');
+    }
+
+    const data = await result.json();
+    const sources = Array.isArray(data.results)
+      ? data.results.map((item: any) => ({
+          title: item.title || 'Search result',
+          url: item.url || '#',
+          snippet: item.snippet || '',
+          source: item.source || 'Web',
+        }))
+      : [];
+
+    return {
+      response: data.answer || 'Here are the latest web results.',
+      sources,
+      searchMode: data.mode === 'live' ? 'live' : 'demo',
+    };
+  };
+
   const processAICommand = async (userMessage: string) => {
     const msg = userMessage.toLowerCase()
       .replace(/\b(bana do|bna do|bana dein|bna dein|add kro|add kar do|kardo|karo|kry|bana|bna)\b/g, ' add ')
@@ -98,8 +147,8 @@ export default function AIChat() {
     await new Promise(resolve => setTimeout(resolve, 500));
 
     if (chatMode === 'web') {
-      const searchData = await mockWebSearch(msg);
-      
+      const searchData = await fetchWebSearchResults(msg);
+
       let action = (fabricAPI: typeof fabric) => {};
       if (canvas && (msg.includes('canvas') || msg.includes('note') || msg.includes('table') || msg.includes('diagram') || msg.includes('mind map'))) {
         action = (fabricAPI: typeof fabric) => {
@@ -121,10 +170,10 @@ export default function AIChat() {
       }
 
       return {
-        response: searchData.text,
+        response: searchData.response,
         action,
         sources: searchData.sources,
-        searchMode: 'demo' as const,
+        searchMode: searchData.searchMode,
       };
     }
 
@@ -276,6 +325,17 @@ export default function AIChat() {
         canvas.add(main, child1, child2);
         drawConnection(fabricAPI, canvas, cx, cy, cx - 140, cy - 95);
         drawConnection(fabricAPI, canvas, cx, cy, cx + 140, cy - 95);
+      };
+    }
+
+    if (response.includes("I didn't understand that command")) {
+      const serverResponse = await fetchServerChat(userMessage, 'standard');
+      response = serverResponse.response;
+      return {
+        response,
+        action: null,
+        sources: serverResponse.sources,
+        searchMode: serverResponse.searchMode,
       };
     }
 
