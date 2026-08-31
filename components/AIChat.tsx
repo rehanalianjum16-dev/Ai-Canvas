@@ -159,7 +159,7 @@ export default function AIChat() {
           if (msg.includes('mind map')) {
             const main = createNodeGroup(fabricAPI, makeLabel(userMessage, 24), centerX - 60, centerY - 25);
             canvas.add(main);
-            searchData.sources.slice(0, 5).forEach((source, index) => {
+            searchData.sources.slice(0, 5).forEach((source: ChatSource, index: number) => {
               const left = centerX - 260 + (index % 3) * 180;
               const top = centerY - 140 + Math.floor(index / 3) * 180;
               canvas.add(createNodeGroup(fabricAPI, makeLabel(source.title), left, top));
