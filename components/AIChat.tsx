@@ -369,21 +369,24 @@ export default function AIChat() {
     try {
       const { response, action, sources, searchMode } = await processAICommand(query);
 
-      const localizedResponse = localizeChatResponse(query, response);
-      const words = localizedResponse.split(' ');
+      // Stream-like effect: update message progressively
+      const words = response.split(' ');
       let currentText = '';
       
       for (let i = 0; i < words.length; i++) {
-        if (generationId !== generationIdRef.current) return;
-        currentText += words[i] + ' ';
+        if (generationId !== generationIdRef.current) return; // Cancelled
+        currentText += (i === 0 ? '' : ' ') + words[i];
         updateMessage(messageId, currentText);
-        await new Promise(r => setTimeout(r, 30));
+        // Shorter delay for faster, more natural appearance
+        await new Promise(r => setTimeout(r, 20));
       }
 
-      updateMessage(messageId, localizedResponse, { sources, searchMode });
+      // Final update with all metadata
+      updateMessage(messageId, response, { sources, searchMode });
 
       if (generationId !== generationIdRef.current) return;
 
+      // Execute canvas action if provided
       if (action) {
         try {
           const { fabric } = await import('fabric');
@@ -391,11 +394,17 @@ export default function AIChat() {
           canvas?.renderAll();
           saveHistory(canvas!);
         } catch (err: any) {
-           addMessage({ role: 'error', content: `Error: ${err.message}` });
+          addMessage({ role: 'error', content: `Canvas error: ${err.message}` });
         }
       }
-    } catch (error) {
-       updateMessage(messageId, "Network or API failure. Please try again.");
+    } catch (error: any) {
+      if (generationId !== generationIdRef.current) return;
+      const errorMsg = error?.message || 'Failed to process your request. Please try again.';
+      updateMessage(messageId, errorMsg);
+      addMessage({ 
+        role: 'error', 
+        content: errorMsg
+      });
     } finally {
       setIsGenerating(false);
     }
