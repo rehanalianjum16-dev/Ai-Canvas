@@ -42,37 +42,91 @@ function getProviderConfig() {
   return null;
 }
 
+function buildSystemPrompt(mode: 'standard' | 'web' | 'document'): string {
+  const basePrompt = `You are an expert AI Canvas Assistant, a specialized design and diagramming AI integrated into a visual canvas tool.
+
+Your primary purpose is to:
+1. Help users create and manage diagrams, flowcharts, mind maps, and visual designs
+2. Generate structured canvas commands and layouts
+3. Provide concise, actionable guidance for canvas operations
+4. Suggest design improvements and canvas organization strategies
+
+Canvas Capabilities You Can Assist With:
+- Creating shapes (rectangles, circles, triangles) with custom labels
+- Building flowcharts, ERDs, mind maps, org charts
+- Generating code snippets and documentation
+- Analyzing documents and generating visual summaries
+- Web research and visual presentation of findings
+
+Communication Style:
+- Be concise and direct (2-3 sentences max unless detailed explanation needed)
+- Use action-oriented language ("I've created...", "I've added...")
+- Proactively suggest next steps or related canvas operations
+- When users request canvas modifications, confirm what was done
+
+Mode-Specific Guidance:`;
+
+  if (mode === 'web') {
+    return basePrompt + `
+- You have access to current web information
+- Prioritize sourced, up-to-date data
+- Organize web findings into visual formats when appropriate
+- Cite sources naturally in your response`;
+  }
+
+  if (mode === 'document') {
+    return basePrompt + `
+- You're analyzing an uploaded document
+- Extract key concepts, entities, and relationships
+- Suggest visual representations (diagrams, charts, summaries)
+- Provide structured insights the user can visualize on canvas`;
+  }
+
+  return basePrompt + `
+- Focus on core canvas operations and design assistance
+- Use fallback suggestions for unsupported features
+- Maintain context from previous interactions when available`;
+}
+
 function createFallbackResponse(query: string): string {
   const normalizedQuery = query.trim();
 
   if (!normalizedQuery) {
-    return 'I am ready to help you create or edit the canvas. Ask me to add shapes, build a diagram, or summarize a document.';
+    return 'I\'m ready to help! You can ask me to create shapes, build diagrams, generate code, or analyze documents. What would you like to create?';
   }
 
-  if (/flowchart|diagram|mind map|chart/i.test(normalizedQuery)) {
-    return `I can create a clear ${normalizedQuery} for your canvas. I can turn it into boxes, arrows, and grouped sections so it is easy to review.`;
+  if (/flowchart|diagram|mind map|chart|organizational|hierarchy/i.test(normalizedQuery)) {
+    return `I'll help you create a ${normalizedQuery.match(/\b\w+\b/)?.[0] || 'diagram'}. I can add nodes, connect them with lines, and organize the structure to make it clear and professional.`;
   }
 
-  if (/code|component|react/i.test(normalizedQuery)) {
-    return `I can generate a clean code block for your ${normalizedQuery}. I will keep the structure simple and useful for the canvas workflow.`;
+  if (/code|component|function|class|react|typescript/i.test(normalizedQuery)) {
+    return `I'll generate a clean code block for your ${normalizedQuery.match(/\w+/)?.[0] || 'code'}. You'll see it added to the canvas as a code element.`;
   }
 
-  if (/blue|rectangle|circle|triangle|shape/i.test(normalizedQuery)) {
-    return `I can add the requested shape to the canvas and adjust the design around your ${normalizedQuery} idea.`;
+  if (/circle|rectangle|triangle|shape|box/i.test(normalizedQuery)) {
+    return `I'll add the requested shape to your canvas and style it appropriately for your design.`;
   }
 
-  return `I understand your request: “${normalizedQuery}”. I can help turn it into a canvas element, diagram, or clear visual structure.`;
+  if (/color|style|design|format/i.test(normalizedQuery)) {
+    return `I can help adjust the styling and appearance of your canvas elements to match your vision.`;
+  }
+
+  return `I understand you want to "${normalizedQuery}". I'll help you create or modify canvas elements to achieve this. What specifically would you like me to add or change?`;
 }
 
-async function getAIResponse(messages: ChatMessage[]) {
+async function streamAIResponse(
+  messages: ChatMessage[],
+  mode: 'standard' | 'web' | 'document'
+): Promise<{
+  response: string;
+  mode: string;
+  sources: [];
+}> {
   const provider = getProviderConfig();
 
   if (!provider) {
-    return {
-      response: createFallbackResponse(messages[messages.length - 1]?.content || ''),
-      mode: 'demo',
-      sources: [],
-    };
+    const fallback = createFallbackResponse(messages[messages.length - 1]?.content || '');
+    return { response: fallback, mode: 'demo', sources: [] };
   }
 
   const headers: Record<string, string> = {
@@ -85,55 +139,107 @@ async function getAIResponse(messages: ChatMessage[]) {
     headers['X-Title'] = 'AI Canvas';
   }
 
-  const response = await fetch(provider.endpoint, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify({
-      model: provider.model,
-      temperature: 0.7,
-      messages,
-      max_tokens: 500,
-    }),
-    cache: 'no-store',
-  });
+  try {
+    const response = await fetch(provider.endpoint, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        model: provider.model,
+        temperature: 0.7,
+        top_p: 0.9,
+        messages,
+        max_tokens: 500,
+        stream: true,
+      }),
+      cache: 'no-store',
+    });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`AI provider failed: ${response.status} - ${errorText}`);
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`AI provider error: ${response.status} - ${errorText}`);
+      throw new Error(`AI provider failed: ${response.status}`);
+    }
+
+    let fullContent = '';
+    const reader = response.body?.getReader();
+    const decoder = new TextDecoder();
+
+    if (!reader) {
+      throw new Error('Unable to read response stream');
+    }
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      const chunk = decoder.decode(value);
+      const lines = chunk.split('\n');
+
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const data = line.slice(6);
+          if (data === '[DONE]') break;
+
+          try {
+            const parsed = JSON.parse(data);
+            const delta = parsed?.choices?.[0]?.delta?.content;
+            if (delta) {
+              fullContent += delta;
+            }
+          } catch {
+            // Skip parse errors for malformed JSON
+          }
+        }
+      }
+    }
+
+    if (!fullContent.trim()) {
+      throw new Error('Empty response from AI provider');
+    }
+
+    return {
+      response: fullContent.trim(),
+      mode: 'live',
+      sources: [],
+    };
+  } catch (error) {
+    console.error('Streaming failed:', error);
+    const fallback = createFallbackResponse(messages[messages.length - 1]?.content || '');
+    return { response: fallback, mode: 'demo', sources: [] };
   }
-
-  const data = await response.json();
-  const content = data?.choices?.[0]?.message?.content;
-
-  if (typeof content !== 'string' || !content.trim()) {
-    throw new Error('The AI provider returned an empty response.');
-  }
-
-  return {
-    response: content.trim(),
-    mode: 'live',
-    sources: [],
-  };
 }
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
     const input = typeof body?.message === 'string' ? body.message.trim() : '';
-    const mode = body?.mode || 'standard';
+    const mode = (body?.mode || 'standard') as 'standard' | 'web' | 'document';
+    const history = Array.isArray(body?.history) ? body.history : [];
 
     if (!input) {
-      return NextResponse.json({ error: 'Please enter a message for the AI assistant.' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Please enter a message for the AI assistant.' },
+        { status: 400 }
+      );
     }
 
-    const systemPrompt = `You are AI Canvas Assistant inside a design tool. Help the user create diagrams, shapes, flowcharts, code snippets, or summaries. Keep responses brief, useful, and action-oriented. When the user asks to create something on a canvas, explain what was created in a natural way. Mode: ${mode}.`;
-
+    // Build message array with conversation history
     const messages: ChatMessage[] = [
-      { role: 'system', content: systemPrompt },
+      { role: 'system', content: buildSystemPrompt(mode) },
+      ...history.filter(
+        (msg: any) => msg.role === 'user' || msg.role === 'assistant'
+      ),
       { role: 'user', content: input },
     ];
 
-    const result = await getAIResponse(messages);
+    // Limit context to last 10 messages + system prompt to avoid token bloat
+    if (messages.length > 11) {
+      const systemMsg = messages[0];
+      messages.splice(1, messages.length - 11);
+      messages.unshift(systemMsg);
+    }
+
+    const result = await streamAIResponse(messages, mode);
     return NextResponse.json(result);
   } catch (error) {
     console.error('Chat API failed:', error);
