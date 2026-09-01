@@ -87,11 +87,20 @@ export default function AIChat() {
     }
   };
 
-  const fetchServerChat = async (message: string, mode: 'standard' | 'web' | 'document') => {
+  const fetchServerChat = async (
+    message: string,
+    mode: 'standard' | 'web' | 'document',
+    onChunk?: (chunk: string) => void
+  ): Promise<{ response: string; sources: ChatSource[]; searchMode: string }> => {
+    // Convert messages to format expected by API (exclude error messages)
+    const history = messages
+      .filter(m => m.role !== 'error')
+      .map(m => ({ role: m.role, content: m.content }));
+
     const result = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message, mode }),
+      body: JSON.stringify({ message, mode, history }),
     });
 
     if (!result.ok) {
