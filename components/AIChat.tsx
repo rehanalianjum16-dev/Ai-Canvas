@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useCanvasStore } from '../store/useCanvasStore';
 import type { ChatSource } from '../store/useCanvasStore';
-import { Send, Mic, Sparkles, User as UserIcon, StopCircle, RefreshCw, AlertCircle, Globe, ExternalLink, Loader2, FileText, Upload, Trash2 } from 'lucide-react';
+import { Send, Mic, Sparkles, User as UserIcon, StopCircle, RefreshCw, AlertCircle, Globe, ExternalLink, Loader2, FileText, Upload, Trash2, Copy, Check } from 'lucide-react';
 import type { fabric } from 'fabric';
 import { localizeChatResponse, mockDocumentAnalysis } from '../lib/mockServices';
 
@@ -14,6 +14,7 @@ export default function AIChat() {
   const [isListening, setIsListening] = useState(false);
   const [chatMode, setChatMode] = useState<'standard' | 'web' | 'document'>('standard');
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   
   const recognitionRef = useRef<any>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -421,6 +422,16 @@ export default function AIChat() {
     clearMessages();
   };
 
+  const handleCopyMessage = async (messageId: string, content: string) => {
+    try {
+      await navigator.clipboard.writeText(content);
+      setCopiedMessageId(messageId);
+      window.setTimeout(() => setCopiedMessageId((current) => current === messageId ? null : current), 1600);
+    } catch {
+      setCopiedMessageId(null);
+    }
+  };
+
   const createNodeGroup = (fabricAPI: typeof fabric, text: string, left: number, top: number) => {
     const rect = new fabricAPI.Rect({
       width: 130, height: 50, fill: '#f1f5f9', stroke: '#cbd5e1', strokeWidth: 2, rx: 8, ry: 8
@@ -518,6 +529,19 @@ export default function AIChat() {
                 : 'bg-slate-100 text-slate-700 rounded-tl-none'
             }`}>
               {msg.content || (msg.role === 'ai' && <span className="animate-pulse">...</span>)}
+
+              {msg.role === 'ai' && msg.content && (
+                <button
+                  type="button"
+                  onClick={() => handleCopyMessage(msg.id, msg.content)}
+                  title={copiedMessageId === msg.id ? 'Copied' : 'Copy response'}
+                  aria-label={copiedMessageId === msg.id ? 'Copied response' : 'Copy response'}
+                  className="mt-2 flex items-center gap-1 text-[10px] text-slate-400 hover:text-blue-600 transition-colors"
+                >
+                  {copiedMessageId === msg.id ? <Check size={11} /> : <Copy size={11} />}
+                  {copiedMessageId === msg.id ? 'Copied' : 'Copy'}
+                </button>
+              )}
 
               {msg.role === 'ai' && msg.sources && msg.sources.length > 0 && (
                 <div className="mt-3 border-t border-slate-200 pt-2 space-y-2">
