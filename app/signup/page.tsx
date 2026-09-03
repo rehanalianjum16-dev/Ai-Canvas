@@ -88,12 +88,6 @@ export default function Signup() {
               placeholder="••••••••"
             />
           </div>
-          <div>
-            input type="checkbox" id="terms" required className="mr-2" />
-            <label htmlFor="terms" className="text-sm text-slate-600">
-              I agree to the <Link href="/terms" className="text-blue-600 hover:underline">Terms of Service</Link> and <Link href="/privacy" className="text-blue-600 hover:underline">Privacy Policy</Link>.
-            </label>
-          </div>
           
           <button 
             type="submit" 
