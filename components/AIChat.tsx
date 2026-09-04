@@ -20,6 +20,37 @@ export default function AIChat() {
   const chatEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const generationIdRef = useRef(0);
+  const hasHydratedMessagesRef = useRef(false);
+
+  useEffect(() => {
+    try {
+      const savedMessages = window.localStorage.getItem('ai-canvas-chat-messages');
+      if (savedMessages) {
+        const parsedMessages = JSON.parse(savedMessages);
+        if (Array.isArray(parsedMessages)) {
+          useCanvasStore.setState({ messages: parsedMessages });
+        }
+      }
+    } catch {
+      window.localStorage.removeItem('ai-canvas-chat-messages');
+    } finally {
+      hasHydratedMessagesRef.current = true;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!hasHydratedMessagesRef.current) return;
+
+    try {
+      if (messages.length === 0) {
+        window.localStorage.removeItem('ai-canvas-chat-messages');
+      } else {
+        window.localStorage.setItem('ai-canvas-chat-messages', JSON.stringify(messages));
+      }
+    } catch {
+      // Storage failures should not prevent chat usage.
+    }
+  }, [messages]);
   
   // Auto scroll
   useEffect(() => {
