@@ -148,7 +148,11 @@ export default function AIChat() {
     };
   };
 
-  const fetchWebSearchResults = async (query: string) => {
+  const fetchWebSearchResults = async (query: string): Promise<{
+    response: string;
+    sources: ChatSource[];
+    searchMode: 'live' | 'demo';
+  }> => {
     const result = await fetch('/api/web-search', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
