@@ -631,6 +631,7 @@ export default function AIChat() {
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') handleSend(); }}
               placeholder={chatMode === 'web' ? "Search the web..." : chatMode === 'document' ? "Ask about document..." : "Ask AI to draw or edit..."}
               className="w-full bg-slate-50 border border-slate-200 rounded-full py-2.5 pl-4 pr-24 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-shadow text-slate-700"
               disabled={isGenerating}
