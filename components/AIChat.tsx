@@ -7,12 +7,14 @@ import { Send, Mic, Sparkles, User as UserIcon, StopCircle, RefreshCw, AlertCirc
 import type { fabric } from 'fabric';
 import { localizeChatResponse, mockDocumentAnalysis } from '../lib/mockServices';
 
+type ChatMode = 'standard' | 'web' | 'document';
+
 export default function AIChat() {
   const { messages, addMessage, clearMessages, updateMessage, isLeftPanelOpen, isGenerating, setIsGenerating, canvas, saveHistory, isRightPanelOpen } = useCanvasStore();
   
   const [input, setInput] = useState('');
   const [isListening, setIsListening] = useState(false);
-  const [chatMode, setChatMode] = useState<'standard' | 'web' | 'document'>('standard');
+  const [chatMode, setChatMode] = useState<ChatMode>('standard');
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   
@@ -88,6 +90,8 @@ export default function AIChat() {
   }, []);
 
   const toggleListen = () => {
+    if (!recognitionRef.current) return;
+
     if (isListening) {
       recognitionRef.current?.stop();
     } else {
@@ -121,7 +125,7 @@ export default function AIChat() {
 
   const fetchServerChat = async (
     message: string,
-    mode: 'standard' | 'web' | 'document',
+    mode: ChatMode,
     onChunk?: (chunk: string) => void
   ): Promise<{ response: string; sources: ChatSource[]; searchMode: 'live' | 'demo' }> => {
     // Convert messages to format expected by API (exclude error messages)
