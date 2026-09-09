@@ -71,7 +71,7 @@ export default function AIChat() {
         const recognition = new SpeechRecognition();
         recognition.continuous = false;
         recognition.interimResults = true;
-        recognition.lang = 'en-US';
+        recognition.lang = navigator.language || 'en-US';
         
         recognition.onresult = (event: any) => {
           let transcript = '';
@@ -145,8 +145,9 @@ export default function AIChat() {
     }
 
     const data = await result.json();
+    const responseText = data.response || 'I am ready to help with your canvas.';
     return {
-      response: data.response || 'I am ready to help with your canvas.',
+      response: localizeChatResponse(message, responseText),
       sources: Array.isArray(data.sources) ? data.sources : [],
       searchMode: data.mode === 'live' ? 'live' : 'demo',
     };
@@ -185,14 +186,26 @@ export default function AIChat() {
     };
   };
 
-  const processAICommand = async (userMessage: string) => {
-    const msg = userMessage.toLowerCase()
-      .replace(/\b(bana do|bna do|bana dein|bna dein|add kro|add kar do|kardo|karo|kry|bana|bna)\b/g, ' add ')
-      .replace(/\b(daen|dayen|right side)\b/g, ' right ')
-      .replace(/\b(hata do|delete kro|remove kro)\b/g, ' delete ')
-      .replace(/\b(neela|nila)\b/g, ' blue ')
+  const normalizeCommandText = (text: string): string => {
+    const lower = text.toLowerCase();
+    return lower
+      .replace(/[\u0600-\u06FF\u0900-\u097F]/g, match => match)
+      .replace(/\b(bana do|bna do|bana dein|bna dein|add kro|add kar do|kardo|karo|kry|bana|bna|añadir|agrega|ajouter|ajoute|create|crear|créer|créez)\b/g, ' add ')
+      .replace(/\b(daen|dayen|right side|dahina|dahine|derecha|droite|right)\b/g, ' right ')
+      .replace(/\b(hata do|delete kro|remove kro|remove|eliminar|supprimer|delete|hatao|hata)\b/g, ' delete ')
+      .replace(/\b(neela|nila|blue|azul|bleu|bleue)\b/g, ' blue ')
+      .replace(/\b(rectangle|rectángulo|rectangle|आयत|مستطیل|box|caja|boîte)\b/g, ' rectangle ')
+      .replace(/\b(circle|cercle|circulo|गोल|دائرہ|oval|ellipse)\b/g, ' circle ')
+      .replace(/\b(triangle|triángulo|triangle|مثلث|त्रिभुज)\b/g, ' triangle ')
+      .replace(/\b(mind map|mindmap|mapa mental|carte mentale|मानसचित्र|مینڈ میپ)\b/g, ' mind map ')
+      .replace(/\b(flowchart|diagrama de flujo|organigramme|फ्लोचार्ट|فلو چارٹ)\b/g, ' flowchart ')
+      .replace(/\b(code|codigo|code|कोड|کوڈ)\b/g, ' code ')
       .replace(/\s+/g, ' ')
       .trim();
+  };
+
+  const processAICommand = async (userMessage: string) => {
+    const msg = normalizeCommandText(userMessage);
     await new Promise(resolve => setTimeout(resolve, 500));
 
     if (chatMode === 'web') {
@@ -377,7 +390,9 @@ export default function AIChat() {
       };
     }
 
-    if (response.includes("I didn't understand that command")) {
+    response = localizeChatResponse(userMessage, response);
+
+    if (response.includes("I didn't understand that command") || response.includes("معذرت") || response.includes("माफ़") || response.includes("lo siento") || response.includes("désolé")) {
       const serverResponse = await fetchServerChat(userMessage, 'standard');
       response = serverResponse.response;
       return {
