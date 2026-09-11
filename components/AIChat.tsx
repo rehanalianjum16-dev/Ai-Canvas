@@ -190,16 +190,16 @@ export default function AIChat() {
     const lower = text.toLowerCase();
     return lower
       .replace(/[\u0600-\u06FF\u0900-\u097F]/g, match => match)
-      .replace(/\b(bana do|bna do|bana dein|bna dein|add kro|add kar do|kardo|karo|kry|bana|bna|añadir|agrega|ajouter|ajoute|create|crear|créer|créez)\b/g, ' add ')
-      .replace(/\b(daen|dayen|right side|dahina|dahine|derecha|droite|right)\b/g, ' right ')
-      .replace(/\b(hata do|delete kro|remove kro|remove|eliminar|supprimer|delete|hatao|hata)\b/g, ' delete ')
-      .replace(/\b(neela|nila|blue|azul|bleu|bleue)\b/g, ' blue ')
-      .replace(/\b(rectangle|rectángulo|rectangle|आयत|مستطیل|box|caja|boîte)\b/g, ' rectangle ')
-      .replace(/\b(circle|cercle|circulo|गोल|دائرہ|oval|ellipse)\b/g, ' circle ')
-      .replace(/\b(triangle|triángulo|triangle|مثلث|त्रिभुज)\b/g, ' triangle ')
-      .replace(/\b(mind map|mindmap|mapa mental|carte mentale|मानसचित्र|مینڈ میپ)\b/g, ' mind map ')
-      .replace(/\b(flowchart|diagrama de flujo|organigramme|फ्लोचार्ट|فلو چارٹ)\b/g, ' flowchart ')
-      .replace(/\b(code|codigo|code|कोड|کوڈ)\b/g, ' code ')
+      .replace(/\b(bana do|bna do|bana dein|bna dein|add kro|add kar do|kardo|karo|kry|bana|bna|añadir|agrega|agregar|ajouter|ajoute|add|create|crear|créer|créez|erstelle|füge|criar|adicionar|aggiungi|nambah|add karo|banao|banao|banaye|banayo)\b/g, ' add ')
+      .replace(/\b(daen|dayen|right side|dahina|dahine|derecha|droite|right|dise|dahi|sahi|rechts|direita|gauche|left)\b/g, ' right ')
+      .replace(/\b(hata do|delete kro|remove kro|remove|eliminar|supprimer|delete|hatao|hata|entferne|löschen|remover|rimuovi|hapus|remove kar)\b/g, ' delete ')
+      .replace(/\b(neela|nila|blue|azul|bleu|bleue|azul|blau|azul|nila|नीला|نیلا|blue)\b/g, ' blue ')
+      .replace(/\b(rectangle|rectángulo|rectangle|आयत|مستطیل|box|caja|boîte|rechteck|retângulo|keluarga|quadro)\b/g, ' rectangle ')
+      .replace(/\b(circle|cercle|circulo|गोल|دائرہ|oval|ellipse|kreis|círculo|círculo|कक्षा|دائرة)\b/g, ' circle ')
+      .replace(/\b(triangle|triángulo|triangle|مثلث|त्रिभुज|dreieck|triângulo|مثلث|triangel)\b/g, ' triangle ')
+      .replace(/\b(mind map|mindmap|mapa mental|carte mentale|मानसचित्र|مینڈ میپ|gedankenkarte|mapa mental|mindmap|karte mentale)\b/g, ' mind map ')
+      .replace(/\b(flowchart|diagrama de flujo|organigramme|फ्लोचार्ट|فلو چارٹ|flussdiagramm|fluxograma|diagramme de flux)\b/g, ' flowchart ')
+      .replace(/\b(code|codigo|code|कोड|کوڈ|codigo|code|코드|コード|quellcode|código)\b/g, ' code ')
       .replace(/\s+/g, ' ')
       .trim();
   };
