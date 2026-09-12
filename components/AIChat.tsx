@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useCanvasStore } from '../store/useCanvasStore';
 import type { ChatSource } from '../store/useCanvasStore';
-import { Send, Mic, Sparkles, User as UserIcon, StopCircle, RefreshCw, AlertCircle, Globe, ExternalLink, Loader2, FileText, Upload, Trash2, Copy, Check } from 'lucide-react';
+import { Send, Mic, Sparkles, User as UserIcon, StopCircle, RefreshCw, AlertCircle, Globe, ExternalLink, Loader2, FileText, Upload, Trash2, Copy, Check, X } from 'lucide-react';
 import type { fabric } from 'fabric';
 import { localizeChatResponse, mockDocumentAnalysis } from '../lib/mockServices';
 
@@ -17,6 +17,7 @@ export default function AIChat() {
   const [chatMode, setChatMode] = useState<ChatMode>('standard');
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
+  const [speechSupported, setSpeechSupported] = useState(false);
   
   const recognitionRef = useRef<any>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -68,6 +69,7 @@ export default function AIChat() {
     if (typeof window !== 'undefined') {
       const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
       if (SpeechRecognition) {
+        setSpeechSupported(true);
         const recognition = new SpeechRecognition();
         recognition.continuous = false;
         recognition.interimResults = true;
@@ -476,6 +478,12 @@ export default function AIChat() {
     clearMessages();
   };
 
+  const starterPrompts = chatMode === 'web'
+    ? ['Research current UX trends', 'Find the latest React release notes', 'Compare two design tools']
+    : chatMode === 'document'
+      ? ['Summarize this document', 'Extract the key decisions', 'Turn this into a mind map']
+      : ['Create a flowchart for an ecommerce checkout', 'Add a blue rectangle named Hero', 'Create a mind map about my project'];
+
   const handleCopyMessage = async (messageId: string, content: string) => {
     try {
       await navigator.clipboard.writeText(content);
@@ -550,11 +558,11 @@ export default function AIChat() {
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages.length === 1 && !isGenerating && (
+        {messages.length <= 1 && !isGenerating && (
           <div className="space-y-2">
             <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Try a prompt</p>
             <div className="grid gap-2">
-              {['Create a flowchart for an ecommerce checkout', 'Add a blue rectangle named Hero', 'Create a mind map about my project'].map((prompt) => (
+              {starterPrompts.map((prompt) => (
                 <button
                   key={prompt}
                   type="button"
@@ -641,27 +649,34 @@ export default function AIChat() {
              <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 rounded-lg border border-slate-200 text-xs text-slate-600">
                 <FileText size={14} className="text-blue-500" />
                 <span className="truncate flex-1">{uploadedFile.name}</span>
-                <button type="button" aria-label="Remove uploaded file" onClick={() => { setUploadedFile(null); setChatMode('standard'); }} className="text-slate-400 hover:text-red-500">x</button>
+                <button type="button" aria-label="Remove uploaded file" onClick={() => { setUploadedFile(null); setChatMode('standard'); }} className="text-slate-400 hover:text-red-500">
+                  <X size={14} />
+                </button>
              </div>
           )}
           
           <div className="relative">
-            <input
-              type="text"
+            <textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') handleSend(); }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSend();
+                }
+              }}
+              rows={2}
               placeholder={chatMode === 'web' ? "Search the web..." : chatMode === 'document' ? "Ask about document..." : "Ask AI to draw or edit..."}
-              className="w-full bg-slate-50 border border-slate-200 rounded-full py-2.5 pl-4 pr-24 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-shadow text-slate-700"
-              disabled={isGenerating}
+              className="w-full resize-none bg-slate-50 border border-slate-200 rounded-2xl py-2.5 pl-4 pr-24 text-sm leading-5 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-shadow text-slate-700"
             />
-            <div className="absolute right-1 top-1 bottom-1 flex items-center gap-1">
+            <div className="absolute right-1 bottom-1 flex items-center gap-1">
               <button 
                 type="button" 
                 onClick={toggleListen}
-                  title={isListening ? 'Stop listening' : 'Use voice input'}
-                  aria-label={isListening ? 'Stop listening' : 'Use voice input'}
-                className={`p-1.5 rounded-full transition-colors ${isListening ? 'bg-red-100 text-red-600 animate-pulse' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-200'}`}
+                disabled={!speechSupported || isGenerating}
+                title={!speechSupported ? 'Voice input is not supported in this browser' : isListening ? 'Stop listening' : 'Use voice input'}
+                aria-label={isListening ? 'Stop listening' : 'Use voice input'}
+                className={`p-1.5 rounded-full transition-colors ${isListening ? 'bg-red-100 text-red-600 animate-pulse' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-200'} disabled:opacity-30 disabled:hover:bg-transparent`}
               >
                 <Mic size={16} />
               </button>
@@ -678,7 +693,9 @@ export default function AIChat() {
               ) : (
                 <button 
                   type="submit" 
-                  disabled={!input.trim() && !isListening} 
+                  disabled={(!input.trim() && !isListening) || isGenerating} 
+                  title="Send message"
+                  aria-label="Send message"
                   className="p-1.5 bg-blue-600 text-white hover:bg-blue-700 rounded-full transition-colors disabled:opacity-50 disabled:hover:bg-blue-600"
                 >
                   <Send size={16} />
@@ -686,6 +703,7 @@ export default function AIChat() {
               )}
             </div>
           </div>
+          <p className="px-1 text-[10px] text-slate-400">Enter to send · Shift+Enter for a new line</p>
         </form>
       </div>
     </div>
