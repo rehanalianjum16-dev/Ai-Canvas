@@ -192,22 +192,134 @@ export default function AIChat() {
     const lower = text.toLowerCase();
     return lower
       .replace(/[\u0600-\u06FF\u0900-\u097F]/g, match => match)
-      .replace(/\b(bana do|bna do|bana dein|bna dein|add kro|add kar do|kardo|karo|kry|bana|bna|añadir|agrega|agregar|ajouter|ajoute|add|create|crear|créer|créez|erstelle|füge|criar|adicionar|aggiungi|nambah|add karo|banao|banao|banaye|banayo)\b/g, ' add ')
+      .replace(/[`"']/g, '')
+      .replace(/\b(bana do|bna do|bana dein|bna dein|add kro|add kar do|kardo|karo|kry|bana|bna|añadir|agrega|agregar|ajouter|ajoute|add|create|make|generate|draw|build|craft|crear|créer|créez|erstelle|füge|criar|adicionar|aggiungi|nambah|add karo|banao|banaye|banayo)\b/g, ' add ')
       .replace(/\b(daen|dayen|right side|dahina|dahine|derecha|droite|right|dise|dahi|sahi|rechts|direita|gauche|left)\b/g, ' right ')
       .replace(/\b(hata do|delete kro|remove kro|remove|eliminar|supprimer|delete|hatao|hata|entferne|löschen|remover|rimuovi|hapus|remove kar)\b/g, ' delete ')
-      .replace(/\b(neela|nila|blue|azul|bleu|bleue|azul|blau|azul|nila|नीला|نیلا|blue)\b/g, ' blue ')
-      .replace(/\b(rectangle|rectángulo|rectangle|आयत|مستطیل|box|caja|boîte|rechteck|retângulo|keluarga|quadro)\b/g, ' rectangle ')
-      .replace(/\b(circle|cercle|circulo|गोल|دائرہ|oval|ellipse|kreis|círculo|círculo|कक्षा|دائرة)\b/g, ' circle ')
-      .replace(/\b(triangle|triángulo|triangle|مثلث|त्रिभुज|dreieck|triângulo|مثلث|triangel)\b/g, ' triangle ')
-      .replace(/\b(mind map|mindmap|mapa mental|carte mentale|मानसचित्र|مینڈ میپ|gedankenkarte|mapa mental|mindmap|karte mentale)\b/g, ' mind map ')
-      .replace(/\b(flowchart|diagrama de flujo|organigramme|फ्लोचार्ट|فلو چارٹ|flussdiagramm|fluxograma|diagramme de flux)\b/g, ' flowchart ')
-      .replace(/\b(code|codigo|code|कोड|کوڈ|codigo|code|코드|コード|quellcode|código)\b/g, ' code ')
+      .replace(/\b(neela|nila|blue|azul|bleu|bleue|blau|navy|indigo|cyan|teal|purple|violet|green|verde|vert|grün|verde|yellow|yellow|amber|orange|red|rojo|rouge|rot|pink|magenta|black|white|gray|grey|silver|gold|brown)\b/g, match => ` ${match} `)
+      .replace(/\b(rectangle|rectángulo|box|card|panel|caja|boîte|rechteck|retângulo|quadro|आयत|مستطیل)\b/g, ' rectangle ')
+      .replace(/\b(circle|cercle|circulo|oval|ellipse|kreis|círculo|गोल|دائرہ|कक्षा|دائرة)\b/g, ' circle ')
+      .replace(/\b(triangle|triángulo|مثلث|त्रिभुज|dreieck|triângulo|triangel)\b/g, ' triangle ')
+      .replace(/\b(sticky note|sticky|note|notepad|memo|post it|post-it|notiz)\b/g, ' sticky note ')
+      .replace(/\b(mind map|mindmap|mapa mental|carte mentale|मानसचित्र|مینڈ میپ|gedankenkarte|mind map|karte mentale)\b/g, ' mind map ')
+      .replace(/\b(flowchart|diagram|workflow|diagrama de flujo|organigramme|फ्लोचार्ट|فلو چارٹ|flussdiagramm|fluxograma|diagramme de flux)\b/g, ' flowchart ')
+      .replace(/\b(code|codigo|कोड|کوڈ|código|quellcode|snippet|component)\b/g, ' code ')
       .replace(/\s+/g, ' ')
       .trim();
   };
 
+  const getNamedColor = (value: string): string => {
+    const palette: Record<string, string> = {
+      blue: '#2563eb',
+      red: '#dc2626',
+      green: '#16a34a',
+      yellow: '#facc15',
+      purple: '#7c3aed',
+      orange: '#f97316',
+      pink: '#ec4899',
+      black: '#111827',
+      white: '#ffffff',
+      teal: '#14b8a6',
+      gray: '#64748b',
+      grey: '#64748b',
+      cyan: '#06b6d4',
+      indigo: '#4f46e5',
+      navy: '#1e3a8a',
+      brown: '#92400e',
+      silver: '#cbd5e1',
+      gold: '#d97706',
+      magenta: '#d946ef',
+      violet: '#8b5cf6',
+      azure: '#0ea5e9',
+    };
+
+    return palette[value.toLowerCase()] || '#2563eb';
+  };
+
+  const getColorFromText = (text: string): string => {
+    const match = Object.keys({ blue: '#2563eb', red: '#dc2626', green: '#16a34a', yellow: '#facc15', purple: '#7c3aed', orange: '#f97316', pink: '#ec4899', black: '#111827', white: '#ffffff', teal: '#14b8a6', cyan: '#06b6d4', gray: '#64748b', grey: '#64748b', indigo: '#4f46e5', navy: '#1e3a8a', brown: '#92400e', silver: '#cbd5e1', gold: '#d97706', magenta: '#d946ef', violet: '#8b5cf6' }).find((color) => text.includes(color));
+    return match ? getNamedColor(match) : '#2563eb';
+  };
+
+  const addSmartShape = (fabricAPI: typeof fabric, canvas: fabric.Canvas, type: 'rectangle' | 'circle' | 'triangle' | 'sticky' | 'note', options?: { fill?: string; stroke?: string; label?: string; width?: number; height?: number; x?: number; y?: number; textColor?: string; }) => {
+    const centerX = canvas.getWidth() / 2;
+    const centerY = canvas.getHeight() / 2;
+    const width = options?.width ?? 140;
+    const height = options?.height ?? 90;
+    const x = options?.x ?? centerX - width / 2;
+    const y = options?.y ?? centerY - height / 2;
+    const fill = options?.fill ?? '#dbeafe';
+    const stroke = options?.stroke ?? '#2563eb';
+    const textColor = options?.textColor ?? '#0f172a';
+
+    if (type === 'rectangle' || type === 'note' || type === 'sticky') {
+      const rect = new fabricAPI.Rect({
+        left: x,
+        top: y,
+        width,
+        height,
+        fill,
+        stroke,
+        strokeWidth: 2,
+        rx: type === 'sticky' ? 10 : 8,
+        ry: type === 'sticky' ? 10 : 8,
+        shadow: new fabricAPI.Shadow({ color: 'rgba(15, 23, 42, 0.12)', blur: 8, offsetX: 0, offsetY: 4 }),
+      });
+
+      if (options?.label) {
+        const label = new fabricAPI.IText(options.label, {
+          left: x + width / 2,
+          top: y + height / 2,
+          originX: 'center',
+          originY: 'center',
+          fill: textColor,
+          fontSize: 16,
+          fontFamily: 'sans-serif',
+          textAlign: 'center',
+        });
+        const group = new fabricAPI.Group([rect, label], { left: x, top: y, hasControls: true });
+        canvas.add(group);
+        canvas.setActiveObject(group);
+        return;
+      }
+
+      canvas.add(rect);
+      canvas.setActiveObject(rect);
+      return;
+    }
+
+    if (type === 'circle') {
+      const circle = new fabricAPI.Circle({
+        left: x,
+        top: y,
+        radius: Math.min(width, height) / 2,
+        fill,
+        stroke,
+        strokeWidth: 2,
+      });
+      canvas.add(circle);
+      canvas.setActiveObject(circle);
+      return;
+    }
+
+    if (type === 'triangle') {
+      const triangle = new fabricAPI.Triangle({
+        left: x,
+        top: y,
+        width,
+        height,
+        fill,
+        stroke,
+        strokeWidth: 2,
+      });
+      canvas.add(triangle);
+      canvas.setActiveObject(triangle);
+    }
+  };
+
   const processAICommand = async (userMessage: string) => {
     const msg = normalizeCommandText(userMessage);
+    const colorHex = getColorFromText(msg);
     await new Promise(resolve => setTimeout(resolve, 500));
 
     if (chatMode === 'web') {
@@ -248,10 +360,14 @@ export default function AIChat() {
     let response = "I'm sorry, I didn't understand that command. Try asking me to add shapes, generate code, or create a diagram.";
     let action = (fabricAPI: typeof fabric) => {};
 
-    if (msg.includes("flowchart") && msg.includes("ecommerce")) {
+    const labelMatch = msg.match(/(?:named|called|labelled|labeled)\s+([a-z0-9][\w\s-]{1,30})/i);
+    const shapeLabel = labelMatch ? labelMatch[1].trim() : '';
+    const hasExplicitShape = msg.includes('rectangle') || msg.includes('circle') || msg.includes('triangle') || msg.includes('sticky note') || msg.includes('note') || msg.includes('mind map') || msg.includes('flowchart');
+
+    if (msg.includes('flowchart') && msg.includes('ecommerce')) {
       response = "I've created a basic e-commerce flowchart for you.";
       action = (fabricAPI: typeof fabric) => {
-        const items = ["Home", "Product Listing", "Product Detail", "Cart", "Checkout"];
+        const items = ['Home', 'Product Listing', 'Product Detail', 'Cart', 'Checkout'];
         items.forEach((item, i) => {
           const group = createNodeGroup(fabricAPI, item, 100 + i * 180, 150);
           canvas.add(group);
@@ -259,97 +375,126 @@ export default function AIChat() {
         });
       };
     }
-    else if (msg.includes("code") || msg.includes("generate code")) {
-      response = "I generated a React component code block for you.";
+    else if (msg.includes('flowchart') || msg.includes('diagram') || msg.includes('workflow')) {
+      response = 'I created a workflow diagram for you.';
+      action = (fabricAPI: typeof fabric) => {
+        const items = ['Start', 'Research', 'Design', 'Build', 'Review'];
+        items.forEach((item, i) => {
+          const group = createNodeGroup(fabricAPI, item, 90 + i * 170, 190);
+          canvas.add(group);
+          if (i > 0) drawConnection(fabricAPI, canvas, 90 + (i - 1) * 170 + 120, 190 + 25, 90 + i * 170, 190 + 25);
+        });
+      };
+    }
+    else if (msg.includes('code') || msg.includes('generate code')) {
+      response = 'I generated a React component code block for you.';
       action = (fabricAPI: typeof fabric) => {
         const text = new fabricAPI.IText('function HelloWorld() {\n  return <div>Hello World!</div>;\n}', {
-          left: canvas.getWidth()/2 - 150, top: canvas.getHeight()/2 - 50,
-          fontFamily: 'monospace', fill: '#e2e8f0', backgroundColor: '#1e293b',
-          fontSize: 14, padding: 16
+          left: canvas.getWidth() / 2 - 150,
+          top: canvas.getHeight() / 2 - 50,
+          fontFamily: 'monospace',
+          fill: '#e2e8f0',
+          backgroundColor: '#1e293b',
+          fontSize: 14,
+          padding: 16,
         });
         canvas.add(text);
         canvas.setActiveObject(text);
       };
     }
-    else if (msg.includes("er diagram") || msg.includes("school")) {
-       response = "I've created a School Management ER diagram.";
-       action = (fabricAPI: typeof fabric) => {
-         const cx = canvas.getWidth()/2;
-         const cy = canvas.getHeight()/2;
-         const s = createNodeGroup(fabricAPI, "Student", cx - 200, cy - 100);
-         const c = createNodeGroup(fabricAPI, "Course", cx + 100, cy - 100);
-         const e = createNodeGroup(fabricAPI, "Enrollment", cx - 50, cy + 100);
-         canvas.add(s, c, e);
-         drawConnection(fabricAPI, canvas, cx - 140, cy - 75, cx - 20, cy + 100);
-         drawConnection(fabricAPI, canvas, cx + 160, cy - 75, cx + 20, cy + 100);
-       };
-    }
-    else if (msg.includes("rectangle named") || msg.includes("box named") || (msg.includes("add") && msg.includes("rectangle"))) {
-      const nameMatch = msg.match(/named\s+([\w\s]+)/);
-      const name = nameMatch ? nameMatch[1].trim() : "New Box";
-      response = `Added a rectangle named "${name}".`;
+    else if (msg.includes('er diagram') || msg.includes('school')) {
+      response = 'I created a School Management ER diagram.';
       action = (fabricAPI: typeof fabric) => {
-        const group = createNodeGroup(fabricAPI, name, canvas.getWidth()/2 - 60, canvas.getHeight()/2 - 25);
-        canvas.add(group);
-        canvas.setActiveObject(group);
+        const cx = canvas.getWidth() / 2;
+        const cy = canvas.getHeight() / 2;
+        const s = createNodeGroup(fabricAPI, 'Student', cx - 200, cy - 100);
+        const c = createNodeGroup(fabricAPI, 'Course', cx + 100, cy - 100);
+        const e = createNodeGroup(fabricAPI, 'Enrollment', cx - 50, cy + 100);
+        canvas.add(s, c, e);
+        drawConnection(fabricAPI, canvas, cx - 140, cy - 75, cx - 20, cy + 100);
+        drawConnection(fabricAPI, canvas, cx + 160, cy - 75, cx + 20, cy + 100);
       };
     }
-    else if (msg.includes("circle") || msg.includes("oval")) {
-      response = "Added a circle to the canvas.";
+    else if (msg.includes('sticky note') || (msg.includes('note') && (msg.includes('add') || msg.includes('create') || msg.includes('make')))) {
+      const noteLabel = shapeLabel || 'Idea';
+      response = `Added a sticky note labeled "${noteLabel}".`;
       action = (fabricAPI: typeof fabric) => {
-        const circle = new fabricAPI.Circle({
-          radius: 45,
-          left: canvas.getWidth() / 2 - 45,
-          top: canvas.getHeight() / 2 - 45,
-          fill: '#dbeafe',
+        addSmartShape(fabricAPI, canvas, 'sticky', {
+          fill: '#fef3c7',
+          stroke: '#f59e0b',
+          label: noteLabel,
+          width: 160,
+          height: 120,
+          x: canvas.getWidth() / 2 - 80,
+          y: canvas.getHeight() / 2 - 60,
+          textColor: '#1f2937',
+        });
+      };
+    }
+    else if (hasExplicitShape && (msg.includes('add') || msg.includes('create') || msg.includes('make') || msg.includes('draw'))) {
+      const label = shapeLabel || (msg.includes('rectangle') ? 'Rectangle' : msg.includes('circle') ? 'Circle' : msg.includes('triangle') ? 'Triangle' : 'Shape');
+      const shapeType = msg.includes('circle') ? 'circle' : msg.includes('triangle') ? 'triangle' : 'rectangle';
+      response = `Added a ${shapeType} named "${label}".`;
+      action = (fabricAPI: typeof fabric) => {
+        addSmartShape(fabricAPI, canvas, shapeType, {
+          fill: colorHex,
+          stroke: '#1f2937',
+          label,
+          width: 180,
+          height: shapeType === 'circle' ? 180 : 110,
+          x: canvas.getWidth() / 2 - 90,
+          y: canvas.getHeight() / 2 - (shapeType === 'circle' ? 90 : 55),
+          textColor: shapeType === 'circle' ? '#0f172a' : '#0f172a',
+        });
+      };
+    }
+    else if (msg.includes('circle') || msg.includes('oval')) {
+      response = 'Added a circle to the canvas.';
+      action = (fabricAPI: typeof fabric) => {
+        addSmartShape(fabricAPI, canvas, 'circle', {
+          fill: colorHex,
           stroke: '#2563eb',
-          strokeWidth: 2,
+          width: 150,
+          height: 150,
         });
-        canvas.add(circle);
-        canvas.setActiveObject(circle);
       };
     }
-    else if (msg.includes("triangle")) {
-      response = "Added a triangle to the canvas.";
+    else if (msg.includes('triangle')) {
+      response = 'Added a triangle to the canvas.';
       action = (fabricAPI: typeof fabric) => {
-        const triangle = new fabricAPI.Triangle({
-          width: 90,
-          height: 90,
-          left: canvas.getWidth() / 2 - 45,
-          top: canvas.getHeight() / 2 - 45,
-          fill: '#dcfce7',
+        addSmartShape(fabricAPI, canvas, 'triangle', {
+          fill: colorHex,
           stroke: '#16a34a',
-          strokeWidth: 2,
+          width: 180,
+          height: 150,
         });
-        canvas.add(triangle);
-        canvas.setActiveObject(triangle);
       };
     }
-    else if (msg.includes("connect")) {
-      response = "Connected the selected objects.";
+    else if (msg.includes('connect')) {
+      response = 'Connected the selected objects.';
       action = (fabricAPI: typeof fabric) => {
-         const activeObjects = canvas.getActiveObjects();
-         if (activeObjects.length === 2) {
-           const [obj1, obj2] = activeObjects;
-           drawConnection(fabricAPI, canvas, obj1.left! + obj1.width!/2, obj1.top! + obj1.height!/2, obj2.left! + obj2.width!/2, obj2.top! + obj2.height!/2);
-         } else {
-           throw new Error("Please select exactly two objects.");
-         }
+        const activeObjects = canvas.getActiveObjects();
+        if (activeObjects.length === 2) {
+          const [obj1, obj2] = activeObjects;
+          drawConnection(fabricAPI, canvas, obj1.left! + obj1.width! / 2, obj1.top! + obj1.height! / 2, obj2.left! + obj2.width! / 2, obj2.top! + obj2.height! / 2);
+        } else {
+          throw new Error('Please select exactly two objects.');
+        }
       };
     }
-    else if (msg.includes("move") && msg.includes("right")) {
-      response = "Moved the object to the right.";
+    else if (msg.includes('move') && msg.includes('right')) {
+      response = 'Moved the object to the right.';
       action = () => {
         const obj = canvas.getActiveObject();
         if (obj) {
           obj.set({ left: (obj.left || 0) + 50 });
           obj.setCoords();
         } else {
-          throw new Error("No object selected.");
+          throw new Error('No object selected.');
         }
       };
     }
-    else if (msg.includes("change") && msg.includes("blue")) {
+    else if (msg.includes('change') && msg.includes('blue')) {
       response = "Changed the selected object's color to blue.";
       action = () => {
         const obj = canvas.getActiveObject();
@@ -361,38 +506,31 @@ export default function AIChat() {
             obj.set('fill', '#3b82f6');
           }
         } else {
-           throw new Error("No object selected.");
+          throw new Error('No object selected.');
         }
       };
     }
-    else if (msg.includes("delete") || msg.includes("remove")) {
-      response = "Deleted the selected object.";
+    else if (msg.includes('delete') || msg.includes('remove')) {
+      response = 'Deleted the selected object.';
       action = () => {
         const objs = canvas.getActiveObjects();
         if (objs.length) {
           canvas.discardActiveObject();
           objs.forEach(o => canvas.remove(o));
         } else {
-          throw new Error("Please select an object to delete.");
+          throw new Error('Please select an object to delete.');
         }
       };
     }
-    else if (msg.includes("mind map")) {
-      response = "Created a mind map on the canvas.";
+    else if (msg.includes('mind map')) {
+      response = 'Created a mind map on the canvas.';
       action = (fabricAPI: typeof fabric) => {
-        const cx = canvas.getWidth()/2;
-        const cy = canvas.getHeight()/2;
-        const main = createNodeGroup(fabricAPI, "Core Topic", cx - 60, cy - 25);
-        const child1 = createNodeGroup(fabricAPI, "Idea 1", cx - 200, cy - 120);
-        const child2 = createNodeGroup(fabricAPI, "Idea 2", cx + 80, cy - 120);
-        
-        canvas.add(main, child1, child2);
-        drawConnection(fabricAPI, canvas, cx, cy, cx - 140, cy - 95);
-        drawConnection(fabricAPI, canvas, cx, cy, cx + 140, cy - 95);
-      };
-    }
+        const cx = canvas.getWidth() / 2;
+        const cy = canvas.getHeight() / 2;
+        const main = createNodeGroup(fabricAPI, 'Core Topic', cx - 60, cy - 25);
+        const child1 = createNodeGroup(fabricAPI, 'Idea 1', cx - 200, cy - 120);
+        const child2 = createNodeGroup(fabricAPI, 'Idea 2', cx + 80, cy - 120);
 
-    response = localizeChatResponse(userMessage, response);
 
     if (response.includes("I didn't understand that command") || response.includes("معذرت") || response.includes("माफ़") || response.includes("lo siento") || response.includes("désolé")) {
       const serverResponse = await fetchServerChat(userMessage, 'standard');
