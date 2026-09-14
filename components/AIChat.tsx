@@ -531,8 +531,21 @@ export default function AIChat() {
         const child1 = createNodeGroup(fabricAPI, 'Idea 1', cx - 200, cy - 120);
         const child2 = createNodeGroup(fabricAPI, 'Idea 2', cx + 80, cy - 120);
 
+        canvas.add(main, child1, child2);
+        drawConnection(fabricAPI, canvas, cx, cy, cx - 140, cy - 95);
+        drawConnection(fabricAPI, canvas, cx, cy, cx + 140, cy - 95);
+      };
+    }
 
-    if (response.includes("I didn't understand that command") || response.includes("معذرت") || response.includes("माफ़") || response.includes("lo siento") || response.includes("désolé")) {
+    response = localizeChatResponse(userMessage, response);
+
+    if (
+      response.includes("I didn't understand that command") ||
+      response.includes('معذرت') ||
+      response.includes('माफ़') ||
+      response.includes('lo siento') ||
+      response.includes('désolé')
+    ) {
       const serverResponse = await fetchServerChat(userMessage, 'standard');
       response = serverResponse.response;
       return {
