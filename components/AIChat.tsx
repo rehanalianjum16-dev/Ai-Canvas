@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useCanvasStore } from '../store/useCanvasStore';
 import type { ChatSource } from '../store/useCanvasStore';
+import { useToastStore } from '../store/useToastStore';
 import { Send, Mic, Sparkles, User as UserIcon, StopCircle, RefreshCw, AlertCircle, Globe, ExternalLink, Loader2, FileText, Upload, Trash2, Copy, Check, X } from 'lucide-react';
 import type { fabric } from 'fabric';
 import { localizeChatResponse, mockDocumentAnalysis } from '../lib/mockServices';
@@ -11,6 +12,7 @@ type ChatMode = 'standard' | 'web' | 'document';
 
 export default function AIChat() {
   const { messages, addMessage, clearMessages, updateMessage, isLeftPanelOpen, isGenerating, setIsGenerating, canvas, saveHistory, isRightPanelOpen } = useCanvasStore();
+  const { addToast } = useToastStore();
   
   const [input, setInput] = useState('');
   const [isListening, setIsListening] = useState(false);
@@ -601,8 +603,10 @@ export default function AIChat() {
           action(fabric);
           canvas?.renderAll();
           saveHistory(canvas!);
+          addToast('Canvas updated successfully', 'success');
         } catch (err: any) {
           addMessage({ role: 'error', content: `Canvas error: ${err.message}` });
+          addToast(`Canvas error: ${err.message}`, 'error');
         }
       }
     } catch (error: any) {
@@ -613,6 +617,7 @@ export default function AIChat() {
         role: 'error', 
         content: errorMsg
       });
+      addToast(errorMsg, 'error');
     } finally {
       setIsGenerating(false);
     }
