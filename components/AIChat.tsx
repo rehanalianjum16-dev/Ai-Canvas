@@ -66,6 +66,17 @@ export default function AIChat() {
     return () => window.speechSynthesis?.cancel();
   }, []);
 
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && isGenerating) {
+        stopGeneration();
+      }
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isGenerating]);
+
   // Init speech recognition
   useEffect(() => {
     if (typeof window !== 'undefined') {
