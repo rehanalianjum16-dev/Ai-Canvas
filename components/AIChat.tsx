@@ -4,7 +4,11 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useCanvasStore } from '../store/useCanvasStore';
 import type { ChatSource } from '../store/useCanvasStore';
 import { useToastStore } from '../store/useToastStore';
-import { Send, Mic, Sparkles, User as UserIcon, StopCircle, RefreshCw, AlertCircle, obe, ExternalLink, Loader2, FileText, Upload, Trash2, Copy, Check, X } from 'lucide-react';
+import {
+  Send, Mic, Sparkles, User as UserIcon, StopCircle, RefreshCw,
+  AlertCircle, ExternalLink, Loader2, FileText, Upload, Trash2,
+  Copy, Check, X,
+} from 'lucide-react';
 import type { fabric } from 'fabric';
 import { localizeChatResponse, mockDocumentAnalysis } from '../lib/mockServices';
 
