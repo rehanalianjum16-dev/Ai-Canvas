@@ -7,7 +7,7 @@ import { useToastStore } from '../store/useToastStore';
 import {
   Send, Mic, Sparkles, User as UserIcon, StopCircle, RefreshCw,
   AlertCircle, ExternalLink, Loader2, FileText, Upload, Trash2,
-  Copy, Check, X,
+  Copy, Check, X, Globe,
 } from 'lucide-react';
 import type { fabric } from 'fabric';
 import { localizeChatResponse, mockDocumentAnalysis } from '../lib/mockServices';
@@ -781,18 +781,23 @@ export default function AIChat() {
                   <div className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
                     <Globe size={11} /> Sources
                   </div>
-                  {msg.sources.map((source) => (
-                    <a
-                      key={source.url}
-                      href={source.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="flex items-start gap-1.5 text-xs text-blue-700 hover:text-blue-900 hover:underline"
-                    >
-                      <ExternalLink size={11} className="mt-0.5 flex-shrink-0" />
-                      <span className="line-clamp-2">{source.title}</span>
-                    </a>
-                  ))}
+                  {msg.sources.map((source, index) => {
+                    const sourceUrl = source.url || '#';
+                    const key = `${sourceUrl}-${source.title || 'source'}-${index}`;
+
+                    return (
+                      <a
+                        key={key}
+                        href={sourceUrl}
+                        target={sourceUrl === '#' ? undefined : '_blank'}
+                        rel={sourceUrl === '#' ? undefined : 'noreferrer'}
+                        className="flex items-start gap-1.5 text-xs text-blue-700 hover:text-blue-900 hover:underline"
+                      >
+                        <ExternalLink size={11} className="mt-0.5 flex-shrink-0" />
+                        <span className="line-clamp-2">{source.title}</span>
+                      </a>
+                    );
+                  })}
                 </div>
               )}
               
