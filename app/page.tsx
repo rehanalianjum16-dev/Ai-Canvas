@@ -9,16 +9,8 @@ import ToastProvider from '../components/ToastProvider';
 export default function Home() {
   return (
     <main className="h-screen w-screen flex flex-col overflow-hidden bg-slate-50 selection:bg-blue-100 selection:text-blue-900">
-      <CommandPalette />
-      <ToastProvider />
-      <TopNav />
-      
-      <div className="flex-1 flex overflow-hidden relative">
-        <LeftSidebar />
-        <CanvasArea />
-        <AIChat />
-        <PropertiesPanel />
-      </div>
+      <CommandPalette /><ToastProvider /><TopNav />
+      <div className="flex-1 flex overflow-hidden relative"><LeftSidebar /><CanvasArea /><AIChat /><PropertiesPanel /></div>
     </main>
   );
 }
