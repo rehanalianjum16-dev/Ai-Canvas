@@ -154,6 +154,10 @@ export default function TopNav() {
             {shareCopied ? <Check size={16} /> : <Share2 size={16} />}
             <span className="hidden sm:inline">{shareCopied ? 'Copied!' : 'Share'}</span>
           </button>
+          <button onClick={() => setIsRightPanelOpen(true)} title="Open AI chat" className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100 rounded-md transition-colors">
+            <Sparkles size={16} />
+            <span className="hidden sm:inline">AI Chat</span>
+          </button>
           
           <button 
             onClick={() => setIsRightPanelOpen(!isRightPanelOpen)}
