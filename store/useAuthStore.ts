@@ -76,7 +76,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     return new Promise((resolve) => {
       setTimeout(() => {
         const { users } = get();
-        const user = users.find(u => u.email === email && u.password === password);
+        const normalizedEmail = email.trim().toLowerCase();
+        const user = users.find(u => u.email.toLowerCase() === normalizedEmail && u.password === password);
         if (user) {
           // don't store password in session
           const { password: _, ...sessionUser } = user;
@@ -94,15 +95,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     return new Promise((resolve) => {
       setTimeout(() => {
         const { users } = get();
-        if (users.find(u => u.email === email)) {
+        const normalizedEmail = email.trim().toLowerCase();
+        if (users.find(u => u.email.toLowerCase() === normalizedEmail)) {
           resolve(false); // Email already exists
           return;
         }
 
         const newUser: User = {
           id: Date.now().toString(),
-          name,
-          email,
+          name: name.trim(),
+          email: normalizedEmail,
           password,
           role: 'user',
           createdAt: Date.now()
