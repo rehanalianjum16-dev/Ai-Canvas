@@ -120,6 +120,11 @@ export default function AIChat() {
     }
   };
 
+  const handleInputClear = () => {
+    setInput('');
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -846,6 +851,16 @@ export default function AIChat() {
               className="w-full resize-none bg-slate-50 border border-slate-200 rounded-2xl py-2.5 pl-4 pr-24 text-sm leading-5 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-shadow text-slate-700"
             />
             <div className="absolute right-1 bottom-1 flex items-center gap-1">
+              <button
+                type="button"
+                onClick={handleInputClear}
+                disabled={!input.trim()}
+                title="Clear input"
+                aria-label="Clear input"
+                className="p-1.5 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-200 disabled:opacity-30 disabled:hover:bg-transparent"
+              >
+                <X size={15} />
+              </button>
               <button 
                 type="button" 
                 onClick={toggleListen}
