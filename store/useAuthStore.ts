@@ -22,14 +22,29 @@ interface AuthState {
   getAllUsers: () => User[];
 }
 
+const USERS_KEY = 'ai-canvas-users';
+const SESSION_KEY = 'ai-canvas-session';
 const DEMO_ADMIN: User = {
   id: 'admin_1',
   name: 'Admin',
   email: 'admin@aicanvas.com',
   password: 'admin123',
   role: 'admin',
-  createdAt: Date.now()
+  createdAt: Date.now(),
 };
+
+const delay = () => new Promise<void>((resolve) => setTimeout(resolve, 500));
+const withoutPassword = ({ password: _password, ...user }: User) => user;
+
+function readUsers(): User[] {
+  try {
+    const stored = localStorage.getItem(USERS_KEY);
+    return stored ? JSON.parse(stored) as User[] : [];
+  } catch (error) {
+    console.error(error);
+    return [];
+  }
+}
 
 export const useAuthStore = create<AuthState>((set, get) => ({
   users: [],
@@ -39,108 +54,71 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   initAuth: () => {
     if (typeof window === 'undefined') return;
-    
-    let storedUsers: User[] = [];
-    try {
-      const db = localStorage.getItem('ai-canvas-users');
-      if (db) {
-        storedUsers = JSON.parse(db);
-      }
-    } catch (e) {
-      console.error(e);
+
+    const users = readUsers();
+    if (!users.some((user) => user.email === DEMO_ADMIN.email)) {
+      users.push(DEMO_ADMIN);
+      localStorage.setItem(USERS_KEY, JSON.stringify(users));
     }
 
-    if (!storedUsers.find(u => u.email === DEMO_ADMIN.email)) {
-      storedUsers.push(DEMO_ADMIN);
-      localStorage.setItem('ai-canvas-users', JSON.stringify(storedUsers));
-    }
-
-    let currentUser = null;
+    let currentUser: User | null = null;
     try {
-      const session = localStorage.getItem('ai-canvas-session');
+      const session = localStorage.getItem(SESSION_KEY);
       if (session) {
-        const storedSession = JSON.parse(session);
-        currentUser = storedUsers.find(u => u.id === storedSession.id) || null;
+        const { id } = JSON.parse(session) as { id: string };
+        currentUser = users.find((user) => user.id === id) ?? null;
       }
-    } catch(e) {}
+    } catch (error) {
+      console.error(error);
+    }
 
-    set({ 
-      users: storedUsers, 
-      currentUser, 
-      isAuthenticated: !!currentUser,
-      isHydrated: true 
-    });
+    set({ users, currentUser, isAuthenticated: !!currentUser, isHydrated: true });
   },
 
   login: async (email, password) => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const { users } = get();
-        const normalizedEmail = email.trim().toLowerCase();
-        const user = users.find(u => u.email.toLowerCase() === normalizedEmail && u.password === password);
-        if (user) {
-          // don't store password in session
-          const { password: _, ...sessionUser } = user;
-          localStorage.setItem('ai-canvas-session', JSON.stringify(sessionUser));
-          set({ currentUser: user, isAuthenticated: true });
-          resolve(true);
-        } else {
-          resolve(false);
-        }
-      }, 500); // Simulate network delay
-    });
+    await delay();
+    const normalizedEmail = email.trim().toLowerCase();
+    const user = get().users.find(
+      (item) => item.email.toLowerCase() === normalizedEmail && item.password === password,
+    );
+    if (!user) return false;
+
+    localStorage.setItem(SESSION_KEY, JSON.stringify(withoutPassword(user)));
+    set({ currentUser: user, isAuthenticated: true });
+    return true;
   },
 
   signup: async (name, email, password) => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const { users } = get();
-        const normalizedEmail = email.trim().toLowerCase();
-        if (users.find(u => u.email.toLowerCase() === normalizedEmail)) {
-          resolve(false); // Email already exists
-          return;
-        }
+    await delay();
+    const users = get().users;
+    const normalizedEmail = email.trim().toLowerCase();
+    if (users.some((user) => user.email.toLowerCase() === normalizedEmail)) return false;
 
-        const newUser: User = {
-          id: Date.now().toString(),
-          name: name.trim(),
-          email: normalizedEmail,
-          password,
-          role: 'user',
-          createdAt: Date.now()
-        };
+    const newUser: User = {
+      id: Date.now().toString(),
+      name: name.trim(),
+      email: normalizedEmail,
+      password,
+      role: 'user',
+      createdAt: Date.now(),
+    };
+    const updatedUsers = [...users, newUser];
 
-        const updatedUsers = [...users, newUser];
-        localStorage.setItem('ai-canvas-users', JSON.stringify(updatedUsers));
-        
-        const { password: _, ...sessionUser } = newUser;
-        localStorage.setItem('ai-canvas-session', JSON.stringify(sessionUser));
-        
-        set({ users: updatedUsers, currentUser: newUser, isAuthenticated: true });
-        resolve(true);
-      }, 500);
-    });
+    localStorage.setItem(USERS_KEY, JSON.stringify(updatedUsers));
+    localStorage.setItem(SESSION_KEY, JSON.stringify(withoutPassword(newUser)));
+    set({ users: updatedUsers, currentUser: newUser, isAuthenticated: true });
+    return true;
   },
 
   logout: () => {
-    localStorage.removeItem('ai-canvas-session');
+    localStorage.removeItem(SESSION_KEY);
     set({ currentUser: null, isAuthenticated: false });
   },
 
   resetPassword: async (email) => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const { users } = get();
-        if (users.find(u => u.email === email)) {
-          resolve(true);
-        } else {
-          resolve(false);
-        }
-      }, 500);
-    });
+    await delay();
+    return get().users.some((user) => user.email === email);
   },
 
-  getAllUsers: () => {
-    return get().users;
-  }
+  getAllUsers: () => get().users,
 }));
