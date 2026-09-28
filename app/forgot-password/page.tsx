@@ -28,16 +28,16 @@ export default function ForgotPassword() {
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-slate-50 p-4">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
-        <div className="p-8 text-center bg-slate-50 border-b border-slate-100">
-          <div className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center mx-auto mb-4">
-            <Sparkles className="text-white" size={24} />
+      <div className="w-full max-w-sm bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
+        <div className="p-6 text-center bg-slate-50 border-b border-slate-100">
+          <div className="w-11 h-11 rounded-xl bg-blue-600 flex items-center justify-center mx-auto mb-3">
+            <Sparkles className="text-white" size={20} />
           </div>
-          <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Reset Password</h1>
-          <p className="text-slate-500 mt-1">We'll send you reset instructions</p>
+          <h1 className="text-xl font-bold text-slate-800 tracking-tight">Reset Password</h1>
+          <p className="text-sm text-slate-500 mt-1">We'll send you reset instructions</p>
         </div>
         
-        <div className="p-8">
+        <div className="p-6">
           {success ? (
             <div className="text-center space-y-4 py-4">
               <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto">
