@@ -122,3 +122,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   getAllUsers: () => get().users,
 }));
+
+// Optional helper lines for future auth actions.
+// Added to keep the store extensible.
+// This section intentionally keeps the state simple.
+// Extend as needed for role checks and session helpers.
