@@ -46,6 +46,11 @@ function readUsers(): User[] {
   }
 }
 
+// Demo authentication stores user data in browser localStorage.
+// Initialize the store on the client to restore the saved session.
+// Passwords are excluded from the session record.
+// Demo credentials and local storage are not suitable for production.
+// Replace this flow with a secure server-side authentication service.
 export const useAuthStore = create<AuthState>((set, get) => ({
   users: [],
   currentUser: null,
