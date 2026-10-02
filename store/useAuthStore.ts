@@ -132,3 +132,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 // Added to keep the store extensible.
 // This section intentionally keeps the state simple.
 // Extend as needed for role checks and session helpers.
+// Session snapshot helper.
+// Keep state in sync with local storage.
+// Extend this store with future auth checks.
+// Consider server-backed auth before production.
+// This demo is intentionally lightweight.
+// This section is intentionally minimal for demo purposes.
+// A production app should validate sessions on the server.
+// Future auth flows can be added without changing state shape.
+// Add auditing and token refresh checks when scaling this store.
+// Keep refresh logic separate from the client-only demo behavior.
