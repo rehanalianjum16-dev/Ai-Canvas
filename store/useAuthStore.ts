@@ -142,3 +142,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 // Future auth flows can be added without changing state shape.
 // Add auditing and token refresh checks when scaling this store.
 // Keep refresh logic separate from the client-only demo behavior.
+// Demo note: this file stores local demo state.
+// Keep this section brief and readable.
+// Any new auth action should update localStorage when needed.
+// This demo intentionally avoids secure token handling.
+// Use server-backed auth in production flows.
