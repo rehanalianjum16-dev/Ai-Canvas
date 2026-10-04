@@ -226,6 +226,16 @@ export default function AIChat() {
       .replace(/\b(mind map|mindmap|mapa mental|carte mentale|मानसचित्र|مینڈ میپ|gedankenkarte|mind map|karte mentale)\b/g, ' mind map ')
       .replace(/\b(flowchart|diagram|workflow|diagrama de flujo|organigramme|फ्लोचार्ट|فلو چارٹ|flussdiagramm|fluxograma|diagramme de flux)\b/g, ' flowchart ')
       .replace(/\b(code|codigo|कोड|کوڈ|código|quellcode|snippet|component)\b/g, ' code ')
+      .replace(/(जोड़ो|जोड़ें|जोड़िए|डालो|बनाओ|बना दो|बनाएं|بناؤ|بنائیں|شامل کرو|شامل کریں|بنادو|أضف|أضيف|أنشئ|ارسم|إضافة|добавь|создай|нарисуй|添加|创建|画一个|追加|作成|描いて|作って|추가|생성|그려|hinzufügen|erstelle|erstellen|füge hinzu|crie|criar|adicione|adicionar|añade|agrega|agregue|ajoute|ajouter)/gi, ' add ')
+      .replace(/(مستطيل|आयत|矩形|四角形|사각형|прямоугольник|rechteck|retângulo|rectángulo)/gi, ' rectangle ')
+      .replace(/(دائرة|गोल|वृत्त|圆形|圆|円|丸|원|круг|kreis|círculo|circulo)/gi, ' circle ')
+      .replace(/(مثلث|त्रिभुज|三角形|삼각형|треугольник|dreieck|triângulo|triangulo)/gi, ' triangle ')
+      .replace(/(ملاحظة لاصقة|چسپاں نوٹ|स्टिकी नोट|付箋|스티커 메모|стикер|notizzettel|nota adesiva|nota adhesiva)/gi, ' sticky note ')
+      .replace(/(خريطة ذهنية|ذہنی نقشہ|माइंड मैप|मानचित्र विचार|思维导图|マインドマップ|마인드맵|ментальная карта|mindmap|carte mentale|mapa mental)/gi, ' mind map ')
+      .replace(/(مخطط انسيابي|فلو چارٹ|प्रवाह चार्ट|流程图|フローチャート|순서도|блок-схема|flussdiagramm|fluxograma|diagrama de flujo)/gi, ' flowchart ')
+      .replace(/(أزرق|نیلا|नीला|蓝色|青色|파란색|синий|blau|azul|bleu)/gi, ' blue ')
+      .replace(/(أحمر|لال|लाल|红色|赤|빨간색|красный|rot|vermelho|rojo|rouge)/gi, ' red ')
+      .replace(/(أخضر|سبز|हरा|绿色|緑|초록색|зелёный|grün|verde|vert)/gi, ' green ')
       .replace(/\s+/g, ' ')
       .trim();
   };
