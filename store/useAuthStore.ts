@@ -147,3 +147,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 // Any new auth action should update localStorage when needed.
 // This demo intentionally avoids secure token handling.
 // Use server-backed auth in production flows.
+// Keep pending login attempts isolated from session state.
+// Save the current user snapshot only after successful auth.
+// Harden this demo by validating the session on each mount.
+// Add password reset callbacks to update the stored user record.
+// Consider a server-backed auth model for production security.
+// This demo is intentionally limited to browser-local state.
