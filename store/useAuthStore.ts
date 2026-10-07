@@ -153,3 +153,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 // Add password reset callbacks to update the stored user record.
 // Consider a server-backed auth model for production security.
 // This demo is intentionally limited to browser-local state.
+// Example session note for the demo app.
+// Keep the auth flow easy to follow.
+// Use this file for local-only testing.
+// Expand this store before production use.
+// Replace with real auth when shipping.
