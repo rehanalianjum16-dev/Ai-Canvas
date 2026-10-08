@@ -9,6 +9,12 @@ import ToastProvider from '../components/ToastProvider';
 export default function Home() {
   return (
     <main className="h-screen w-screen flex flex-col overflow-hidden bg-slate-50 selection:bg-blue-100 selection:text-blue-900">
+      <section className="border-b border-slate-200 bg-white px-4 py-2">
+        <h1 className="text-sm font-semibold text-slate-900">
+          Welcome to AI Canvas
+        </h1>
+        <p className="text-xs text-slate-600">Build and explore ideas on your canvas.</p>
+      </section>
       <CommandPalette /><ToastProvider /><TopNav />
       <div className="flex-1 flex overflow-hidden relative"><LeftSidebar /><CanvasArea /><AIChat /><PropertiesPanel /></div>
     </main>
