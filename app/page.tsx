@@ -17,6 +17,13 @@ export default function Home() {
       </section>
       <CommandPalette /><ToastProvider /><TopNav />
       <div className="flex-1 flex overflow-hidden relative"><LeftSidebar /><CanvasArea /><AIChat /><PropertiesPanel /></div>
+      <div className="mt-4 text-xs text-slate-500">
+        Line 1
+        Line 2
+        Line 3
+        Line 4
+        Line 5
+      </div>
     </main>
   );
 }

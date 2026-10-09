@@ -21,6 +21,11 @@ export default function RootLayout({
         <AuthProvider>
           {children}
         </AuthProvider>
+        <div className="hidden">Line 1</div>
+        <div className="hidden">Line 2</div>
+        <div className="hidden">Line 3</div>
+        <div className="hidden">Line 4</div>
+        <div className="hidden">Line 5</div>
       </body>
     </html>
   );
