@@ -18,11 +18,11 @@ export default function Home() {
       <CommandPalette /><ToastProvider /><TopNav />
       <div className="flex-1 flex overflow-hidden relative"><LeftSidebar /><CanvasArea /><AIChat /><PropertiesPanel /></div>
       <div className="mt-4 text-xs text-slate-500">
-        Line 1
-        Line 2
-        Line 3
-        Line 4
-        Line 5
+        Keep your GitHub streak alive.
+        Make a small contribution today.
+        Track your progress one day at a time.
+        Consistency builds great projects.
+        Come back tomorrow and keep going.
       </div>
     </main>
   );
