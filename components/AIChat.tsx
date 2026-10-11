@@ -595,6 +595,7 @@ export default function AIChat() {
     e?.preventDefault();
     const query = retryMsg || input;
     if (!query.trim() || isGenerating) return;
+    console.info('[AIChat] Sending message', { mode: chatMode, isRetry: Boolean(retryMsg) });
 
     if (!retryMsg) {
       addMessage({ role: 'user', content: query });
@@ -608,6 +609,7 @@ export default function AIChat() {
 
     try {
       const { response, action, sources, searchMode } = await processAICommand(query);
+      console.info('[AIChat] Response received', { sourceCount: sources.length, hasCanvasAction: Boolean(action) });
 
       // Stream-like effect: update message progressively
       const words = response.split(' ');
@@ -634,13 +636,16 @@ export default function AIChat() {
           canvas?.renderAll();
           saveHistory(canvas!);
           addToast('Canvas updated successfully', 'success');
+          console.info('[AIChat] Canvas action completed');
         } catch (err: any) {
+          console.error('[AIChat] Canvas action failed', err);
           addMessage({ role: 'error', content: `Canvas error: ${err.message}` });
           addToast(`Canvas error: ${err.message}`, 'error');
         }
       }
     } catch (error: any) {
       if (generationId !== generationIdRef.current) return;
+      console.error('[AIChat] Message processing failed', error);
       const errorMsg = error?.message || 'Failed to process your request. Please try again.';
       updateMessage(messageId, errorMsg);
       addMessage({ 
