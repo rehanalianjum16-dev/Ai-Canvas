@@ -14,6 +14,13 @@ export default function Home() {
           Welcome to AI Canvas
         </h1>
         <p className="text-xs text-slate-600">Build and explore ideas on your canvas.</p>
+        <ul className="mt-2 text-xs text-slate-500">
+          <li>Start with an idea.</li>
+          <li>Add notes to your canvas.</li>
+          <li>Connect related thoughts.</li>
+          <li>Ask AI to help you explore.</li>
+          <li>Keep refining your work.</li>
+        </ul>
       </section>
       <CommandPalette /><ToastProvider /><TopNav />
       <div className="flex-1 flex overflow-hidden relative"><LeftSidebar /><CanvasArea /><AIChat /><PropertiesPanel /></div>
