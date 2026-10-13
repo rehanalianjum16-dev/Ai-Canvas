@@ -139,8 +139,11 @@ export default function AIChat() {
       try {
         const analysis = await mockDocumentAnalysis(file);
         updateMessage(messageId, analysis);
-      } catch (err) {
-        updateMessage(messageId, "Failed to analyze document.");
+      } catch (error) {
+        console.error('[AIChat] Document analysis failed', error);
+        const errorMessage = error instanceof Error ? error.message : 'Failed to analyze document.';
+        updateMessage(messageId, errorMessage);
+        addToast(errorMessage, 'error');
       } finally {
         setIsGenerating(false);
       }
