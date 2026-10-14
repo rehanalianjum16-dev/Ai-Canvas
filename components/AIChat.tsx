@@ -140,9 +140,13 @@ export default function AIChat() {
         const analysis = await mockDocumentAnalysis(file);
         updateMessage(messageId, analysis);
       } catch (error) {
-        console.error('[AIChat] Document analysis failed', error);
-        const errorMessage = error instanceof Error ? error.message : 'Failed to analyze document.';
+        const details = error instanceof Error ? error.message : 'Unknown error';
+        console.error('[AIChat] Document analysis failed', { fileName: file.name, details });
+        const errorMessage = 'Failed to analyze document. Please try another file.';
         updateMessage(messageId, errorMessage);
+        addMessage({ role: 'error', content: `Document analysis details: ${details}` });
+        setUploadedFile(null);
+        if (fileInputRef.current) fileInputRef.current.value = '';
         addToast(errorMessage, 'error');
       } finally {
         setIsGenerating(false);
