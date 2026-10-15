@@ -154,6 +154,17 @@ export default function AIChat() {
     }
   };
 
+  const parseApiResponse = async (result: Response): Promise<Record<string, any>> => {
+    const data = await result.json().catch(() => null);
+    if (!data || typeof data !== 'object' || Array.isArray(data)) {
+      throw new Error('The server returned an invalid response. Please try again.');
+    }
+    if (!result.ok) {
+      throw new Error(typeof data.error === 'string' ? data.error : 'The service is unavailable. Please try again.');
+    }
+    return data;
+  };
+
   const fetchServerChat = async (
     message: string,
     mode: ChatMode,
@@ -170,12 +181,7 @@ export default function AIChat() {
       body: JSON.stringify({ message, mode, history }),
     });
 
-    if (!result.ok) {
-      const errorData = await result.json().catch(() => ({}));
-      throw new Error(errorData?.error || 'AI service unavailable.');
-    }
-
-    const data = await result.json();
+    const data = await parseApiResponse(result);
     const responseText = data.response || 'I am ready to help with your canvas.';
     return {
       response: localizeChatResponse(message, responseText),
@@ -195,12 +201,7 @@ export default function AIChat() {
       body: JSON.stringify({ query }),
     });
 
-    if (!result.ok) {
-      const errorData = await result.json().catch(() => ({}));
-      throw new Error(errorData?.error || 'Web search service unavailable.');
-    }
-
-    const data = await result.json();
+    const data = await parseApiResponse(result);
     const sources = Array.isArray(data.results)
       ? data.results.map((item: any) => ({
           title: item.title || 'Search result',

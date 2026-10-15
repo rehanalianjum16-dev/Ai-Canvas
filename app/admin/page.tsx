@@ -8,10 +8,9 @@ import { ShieldAlert, Users, Image as ImageIcon, ArrowLeft, Shield } from 'lucid
 
 export default function AdminDashboard() {
   const { getAllUsers, currentUser } = useAuthStore();
-  const { loadProjects } = useCanvasStore();
-
   const [users, setUsers] = useState<User[]>([]);
   const [totalProjects, setTotalProjects] = useState(0);
+  const [projectsError, setProjectsError] = useState('');
 
   useEffect(() => {
     setUsers(getAllUsers());
@@ -20,9 +19,14 @@ export default function AdminDashboard() {
     try {
       const stored = localStorage.getItem('ai-canvas-projects');
       if (stored) {
-        setTotalProjects(JSON.parse(stored).length);
+        const projects: unknown = JSON.parse(stored);
+        if (!Array.isArray(projects)) throw new Error('Saved projects have an unexpected format.');
+        setTotalProjects(projects.length);
       }
-    } catch (e) { }
+    } catch (error) {
+      console.error('Failed to load project statistics:', error);
+      setProjectsError('Canvas statistics are unavailable because saved project data could not be read.');
+    }
   }, [getAllUsers]);
 
   if (currentUser?.role !== 'admin') {
@@ -51,6 +55,7 @@ export default function AdminDashboard() {
               <h1 className="text-3xl font-bold text-slate-800">Admin Dashboard</h1>
             </div>
             <p className="text-slate-500">Manage users and view platform statistics</p>
+            {projectsError && <p role="alert" className="mt-2 text-sm text-red-600">{projectsError}</p>}
           </div>
           <Link href="/" className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors font-medium">
             <ArrowLeft size={16} />
