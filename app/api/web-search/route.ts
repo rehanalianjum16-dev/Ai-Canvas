@@ -32,12 +32,21 @@ const createDemoResults = (query: string): SearchResult[] => {
 };
 
 export async function POST(request: Request) {
+  let body: any;
   try {
-    const body = await request.json();
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: 'Request body must be valid JSON.' }, { status: 400 });
+  }
+
+  try {
     const query = typeof body?.query === 'string' ? body.query.trim() : '';
 
     if (!query) {
       return NextResponse.json({ error: 'Please enter a search topic.' }, { status: 400 });
+    }
+    if (query.length > 500) {
+      return NextResponse.json({ error: 'Search topics must be 500 characters or fewer.' }, { status: 400 });
     }
 
     const apiKey = process.env.TAVILY_API_KEY;
@@ -69,15 +78,31 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'The web search provider returned an error.' }, { status: 502 });
     }
 
-    const data = await response.json();
+    let data: any;
+    try {
+      data = await response.json();
+    } catch {
+      return NextResponse.json({ error: 'The web search provider returned an invalid response.' }, { status: 502 });
+    }
     const results: SearchResult[] = (Array.isArray(data.results) ? data.results : [])
-      .filter((result: TavilyResult) => result.title && result.url)
-      .map((result: TavilyResult) => ({
-        title: result.title as string,
-        url: result.url as string,
-        snippet: result.content || 'No preview available.',
-        source: new URL(result.url as string).hostname.replace(/^www\./, ''),
-      }));
+      .filter((result: TavilyResult) => {
+        if (typeof result?.title !== 'string' || typeof result.url !== 'string') return false;
+        try {
+          const url = new URL(result.url);
+          return url.protocol === 'https:' || url.protocol === 'http:';
+        } catch {
+          return false;
+        }
+      })
+      .map((result: TavilyResult) => {
+        const url = new URL(result.url as string);
+        return {
+          title: result.title as string,
+          url: url.toString(),
+          snippet: typeof result.content === 'string' ? result.content : 'No preview available.',
+          source: url.hostname.replace(/^www\./, ''),
+        };
+      });
 
     return NextResponse.json({
       mode: 'live',

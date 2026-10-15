@@ -281,11 +281,31 @@ async function streamAIResponse(
 }
 
 export async function POST(request: Request) {
+  let body: any;
   try {
-    const body = await request.json();
-    const input = typeof body?.message === 'string' ? body.message.trim() : '';
-    const mode = (body?.mode || 'standard') as 'standard' | 'web' | 'document';
-    const history = Array.isArray(body?.history) ? body.history : [];
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: 'Request body must be valid JSON.' }, { status: 400 });
+  }
+
+  try {
+    if (!body || typeof body !== 'object' || Array.isArray(body)) {
+      return NextResponse.json({ error: 'Request body must be a JSON object.' }, { status: 400 });
+    }
+
+    const input = typeof body.message === 'string' ? body.message.trim() : '';
+    const mode = body.mode ?? 'standard';
+    if (!['standard', 'web', 'document'].includes(mode)) {
+      return NextResponse.json({ error: 'Unsupported chat mode.' }, { status: 400 });
+    }
+    const history = Array.isArray(body.history)
+      ? body.history.filter(
+          (msg: any): msg is ChatMessage =>
+            msg && typeof msg === 'object' &&
+            (msg.role === 'user' || msg.role === 'assistant') &&
+            typeof msg.content === 'string'
+        )
+      : [];
 
     if (!input) {
       return NextResponse.json(
@@ -297,9 +317,7 @@ export async function POST(request: Request) {
     // Build message array with conversation history
     const messages: ChatMessage[] = [
       { role: 'system', content: buildSystemPrompt(mode) },
-      ...history.filter(
-        (msg: any) => msg.role === 'user' || msg.role === 'assistant'
-      ),
+      ...history,
       { role: 'user', content: input },
     ];
 
@@ -314,16 +332,9 @@ export async function POST(request: Request) {
     return NextResponse.json(result);
   } catch (error) {
     console.error('Chat API failed:', error);
-    const body = await request.clone().json().catch(() => ({}));
-    const fallbackMessage = typeof body?.message === 'string' ? body.message : 'your request';
-
     return NextResponse.json(
-      {
-        response: createFallbackResponse(fallbackMessage),
-        mode: 'demo',
-        sources: [],
-      },
-      { status: 200 }
+      { error: 'Unable to process your message right now. Please try again.' },
+      { status: 500 }
     );
   }
 }
