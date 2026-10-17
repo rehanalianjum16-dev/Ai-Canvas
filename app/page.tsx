@@ -9,17 +9,14 @@ import ToastProvider from '../components/ToastProvider';
 export default function Home() {
   return (
     <main className="h-screen w-screen flex flex-col overflow-hidden bg-slate-50 selection:bg-blue-100 selection:text-blue-900">
-      <section className="border-b border-slate-200 bg-white px-4 py-2">
-        <h1 className="text-sm font-semibold text-slate-900">
-          Welcome to AI Canvas
-        </h1>
-        <p className="text-xs text-slate-600">Build and explore ideas on your canvas.</p>
-        <ul className="mt-2 text-xs text-slate-500">
-          <li>Start with an idea.</li>
-          <li>Add notes to your canvas.</li>
-          <li>Connect related thoughts.</li>
-          <li>Ask AI to help you explore.</li>
-          <li>Keep refining your work.</li>
+      <section role="status" aria-label="Workspace notifications" className="border-b border-blue-100 bg-blue-50 px-4 py-2">
+        <h1 className="text-sm font-semibold text-blue-900">Workspace notifications</h1>
+        <ul className="mt-1 text-xs leading-5 text-blue-800">
+          <li>Your AI Canvas workspace is ready.</li>
+          <li>Create a project to organize a new idea.</li>
+          <li>Use the AI Chat panel to explore your canvas.</li>
+          <li>Export your work as a PNG or PDF when ready.</li>
+          <li>Share your canvas with collaborators.</li>
         </ul>
       </section>
       <CommandPalette /><ToastProvider /><TopNav />
