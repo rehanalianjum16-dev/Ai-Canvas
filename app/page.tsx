@@ -7,6 +7,12 @@ import CommandPalette from '../components/CommandPalette';
 import ToastProvider from '../components/ToastProvider';
 
 export default function Home() {
+  console.log('AI Canvas page loaded');
+  console.log('Workspace initialized');
+  console.log('Canvas ready for rendering');
+  console.log('AI Chat panel active');
+  console.log('Properties panel mounted');
+
   return (
     <main className="h-screen w-screen flex flex-col overflow-hidden bg-slate-50 selection:bg-blue-100 selection:text-blue-900">
       <section role="status" aria-label="Workspace notifications" className="border-b border-blue-100 bg-blue-50 px-4 py-2">
