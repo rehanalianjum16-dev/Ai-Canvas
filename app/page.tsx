@@ -23,6 +23,7 @@ export default function Home() {
           <li>Use the AI Chat panel to explore your canvas.</li>
           <li>Export your work as a PNG or PDF when ready.</li>
           <li>Share your canvas with collaborators.</li>
+          <li>Use Ctrl/Cmd+Z to undo canvas edits.</li>
         </ul>
       </section>
       <CommandPalette /><ToastProvider /><TopNav />
