@@ -10,6 +10,7 @@ function push() {
       <h5>I'm create a different full stack websites and app in next js and react js and node js and express js and mongodb</h5>  
         <h6>i'm a developer and designer and if you want to hire me then contact me on my email address
       </h6>
+<h2>Last month i create ecmoerce store and different types of websites like shopify and wordpress and different types of applications <h2/>
     </div>
   )
 }
