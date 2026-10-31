@@ -139,12 +139,30 @@ export default function AIChat() {
       try {
         const analysis = await mockDocumentAnalysis(file);
         updateMessage(messageId, analysis);
-      } catch (err) {
-        updateMessage(messageId, "Failed to analyze document.");
+      } catch (error) {
+        const details = error instanceof Error ? error.message : 'Unknown error';
+        console.error('[AIChat] Document analysis failed', { fileName: file.name, details });
+        const errorMessage = 'Failed to analyze document. Please try another file.';
+        updateMessage(messageId, errorMessage);
+        addMessage({ role: 'error', content: `Document analysis details: ${details}` });
+        setUploadedFile(null);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+        addToast(errorMessage, 'error');
       } finally {
         setIsGenerating(false);
       }
     }
+  };
+
+  const parseApiResponse = async (result: Response): Promise<Record<string, any>> => {
+    const data = await result.json().catch(() => null);
+    if (!data || typeof data !== 'object' || Array.isArray(data)) {
+      throw new Error('The server returned an invalid response. Please try again.');
+    }
+    if (!result.ok) {
+      throw new Error(typeof data.error === 'string' ? data.error : 'The service is unavailable. Please try again.');
+    }
+    return data;
   };
 
   const fetchServerChat = async (
@@ -163,12 +181,7 @@ export default function AIChat() {
       body: JSON.stringify({ message, mode, history }),
     });
 
-    if (!result.ok) {
-      const errorData = await result.json().catch(() => ({}));
-      throw new Error(errorData?.error || 'AI service unavailable.');
-    }
-
-    const data = await result.json();
+    const data = await parseApiResponse(result);
     const responseText = data.response || 'I am ready to help with your canvas.';
     return {
       response: localizeChatResponse(message, responseText),
@@ -188,12 +201,7 @@ export default function AIChat() {
       body: JSON.stringify({ query }),
     });
 
-    if (!result.ok) {
-      const errorData = await result.json().catch(() => ({}));
-      throw new Error(errorData?.error || 'Web search service unavailable.');
-    }
-
-    const data = await result.json();
+    const data = await parseApiResponse(result);
     const sources = Array.isArray(data.results)
       ? data.results.map((item: any) => ({
           title: item.title || 'Search result',
@@ -226,6 +234,16 @@ export default function AIChat() {
       .replace(/\b(mind map|mindmap|mapa mental|carte mentale|मानसचित्र|مینڈ میپ|gedankenkarte|mind map|karte mentale)\b/g, ' mind map ')
       .replace(/\b(flowchart|diagram|workflow|diagrama de flujo|organigramme|फ्लोचार्ट|فلو چارٹ|flussdiagramm|fluxograma|diagramme de flux)\b/g, ' flowchart ')
       .replace(/\b(code|codigo|कोड|کوڈ|código|quellcode|snippet|component)\b/g, ' code ')
+      .replace(/(जोड़ो|जोड़ें|जोड़िए|डालो|बनाओ|बना दो|बनाएं|بناؤ|بنائیں|شامل کرو|شامل کریں|بنادو|أضف|أضيف|أنشئ|ارسم|إضافة|добавь|создай|нарисуй|添加|创建|画一个|追加|作成|描いて|作って|추가|생성|그려|hinzufügen|erstelle|erstellen|füge hinzu|crie|criar|adicione|adicionar|añade|agrega|agregue|ajoute|ajouter)/gi, ' add ')
+      .replace(/(مستطيل|आयत|矩形|四角形|사각형|прямоугольник|rechteck|retângulo|rectángulo)/gi, ' rectangle ')
+      .replace(/(دائرة|गोल|वृत्त|圆形|圆|円|丸|원|круг|kreis|círculo|circulo)/gi, ' circle ')
+      .replace(/(مثلث|त्रिभुज|三角形|삼각형|треугольник|dreieck|triângulo|triangulo)/gi, ' triangle ')
+      .replace(/(ملاحظة لاصقة|چسپاں نوٹ|स्टिकी नोट|付箋|스티커 메모|стикер|notizzettel|nota adesiva|nota adhesiva)/gi, ' sticky note ')
+      .replace(/(خريطة ذهنية|ذہنی نقشہ|माइंड मैप|मानचित्र विचार|思维导图|マインドマップ|마인드맵|ментальная карта|mindmap|carte mentale|mapa mental)/gi, ' mind map ')
+      .replace(/(مخطط انسيابي|فلو چارٹ|प्रवाह चार्ट|流程图|フローチャート|순서도|блок-схема|flussdiagramm|fluxograma|diagrama de flujo)/gi, ' flowchart ')
+      .replace(/(أزرق|نیلا|नीला|蓝色|青色|파란색|синий|blau|azul|bleu)/gi, ' blue ')
+      .replace(/(أحمر|لال|लाल|红色|赤|빨간색|красный|rot|vermelho|rojo|rouge)/gi, ' red ')
+      .replace(/(أخضر|سبز|हरा|绿色|緑|초록색|зелёный|grün|verde|vert)/gi, ' green ')
       .replace(/\s+/g, ' ')
       .trim();
   };
@@ -585,6 +603,7 @@ export default function AIChat() {
     e?.preventDefault();
     const query = retryMsg || input;
     if (!query.trim() || isGenerating) return;
+    console.info('[AIChat] Sending message', { mode: chatMode, isRetry: Boolean(retryMsg) });
 
     if (!retryMsg) {
       addMessage({ role: 'user', content: query });
@@ -598,6 +617,7 @@ export default function AIChat() {
 
     try {
       const { response, action, sources, searchMode } = await processAICommand(query);
+      console.info('[AIChat] Response received', { sourceCount: sources.length, hasCanvasAction: Boolean(action) });
 
       // Stream-like effect: update message progressively
       const words = response.split(' ');
@@ -624,13 +644,16 @@ export default function AIChat() {
           canvas?.renderAll();
           saveHistory(canvas!);
           addToast('Canvas updated successfully', 'success');
+          console.info('[AIChat] Canvas action completed');
         } catch (err: any) {
+          console.error('[AIChat] Canvas action failed', err);
           addMessage({ role: 'error', content: `Canvas error: ${err.message}` });
           addToast(`Canvas error: ${err.message}`, 'error');
         }
       }
     } catch (error: any) {
       if (generationId !== generationIdRef.current) return;
+      console.error('[AIChat] Message processing failed', error);
       const errorMsg = error?.message || 'Failed to process your request. Please try again.';
       updateMessage(messageId, errorMsg);
       addMessage({ 

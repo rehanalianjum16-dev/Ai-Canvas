@@ -19,11 +19,16 @@ export default function Login() {
     setError('');
     setIsLoading(true);
     
-    const success = await login(email, password);
-    if (success) {
-      router.push('/');
-    } else {
-      setError('Invalid email or password');
+    try {
+      const success = await login(email, password);
+      if (success) {
+        router.push('/');
+      } else {
+        setError('Invalid email or password');
+      }
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Unable to sign in. Please try again.');
+    } finally {
       setIsLoading(false);
     }
   };

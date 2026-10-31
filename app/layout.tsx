@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import AuthProvider from '../components/AuthProvider';
+import ErrorLogger from '../components/ErrorLogger';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -18,9 +19,15 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
+        <ErrorLogger />
         <AuthProvider>
           {children}
         </AuthProvider>
+        <div className="hidden">Line 1</div>
+        <div className="hidden">Line 2</div>
+        <div className="hidden">Line 3</div>
+        <div className="hidden">Line 4</div>
+        <div className="hidden">Line 5</div>
       </body>
     </html>
   );

@@ -26,11 +26,16 @@ export default function Signup() {
       return;
     }
     
-    const success = await signup(name, email, password);
-    if (success) {
-      router.push('/');
-    } else {
-      setError('An account with this email already exists');
+    try {
+      const success = await signup(name, email, password);
+      if (success) {
+        router.push('/');
+      } else {
+        setError('An account with this email already exists');
+      }
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Unable to create your account. Please try again.');
+    } finally {
       setIsLoading(false);
     }
   };

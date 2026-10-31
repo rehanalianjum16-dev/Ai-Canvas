@@ -63,7 +63,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     const users = readUsers();
     if (!users.some((user) => user.email === DEMO_ADMIN.email)) {
       users.push(DEMO_ADMIN);
-      localStorage.setItem(USERS_KEY, JSON.stringify(users));
+      try {
+        localStorage.setItem(USERS_KEY, JSON.stringify(users));
+      } catch (error) {
+        console.error('Unable to persist demo users:', error);
+      }
     }
 
     let currentUser: User | null = null;
@@ -88,7 +92,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     );
     if (!user) return false;
 
-    localStorage.setItem(SESSION_KEY, JSON.stringify(withoutPassword(user)));
+    try {
+      localStorage.setItem(SESSION_KEY, JSON.stringify(withoutPassword(user)));
+    } catch (error) {
+      console.error('Unable to save login session:', error);
+      throw new Error('Unable to save your session. Check browser storage and try again.');
+    }
     set({ currentUser: user, isAuthenticated: true });
     return true;
   },
@@ -109,14 +118,29 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     };
     const updatedUsers = [...users, newUser];
 
-    localStorage.setItem(USERS_KEY, JSON.stringify(updatedUsers));
-    localStorage.setItem(SESSION_KEY, JSON.stringify(withoutPassword(newUser)));
+    try {
+      localStorage.setItem(USERS_KEY, JSON.stringify(updatedUsers));
+      localStorage.setItem(SESSION_KEY, JSON.stringify(withoutPassword(newUser)));
+    } catch (error) {
+      try {
+        localStorage.setItem(USERS_KEY, JSON.stringify(users));
+        localStorage.removeItem(SESSION_KEY);
+      } catch (rollbackError) {
+        console.error('Unable to restore auth storage after signup failure:', rollbackError);
+      }
+      console.error('Unable to save signup data:', error);
+      throw new Error('Unable to create your account. Check browser storage and try again.');
+    }
     set({ users: updatedUsers, currentUser: newUser, isAuthenticated: true });
     return true;
   },
 
   logout: () => {
-    localStorage.removeItem(SESSION_KEY);
+    try {
+      localStorage.removeItem(SESSION_KEY);
+    } catch (error) {
+      console.error('Unable to clear saved session:', error);
+    }
     set({ currentUser: null, isAuthenticated: false });
   },
 
@@ -147,3 +171,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 // Any new auth action should update localStorage when needed.
 // This demo intentionally avoids secure token handling.
 // Use server-backed auth in production flows.
+// Keep pending login attempts isolated from session state.
+// Save the current user snapshot only after successful auth.
+// Harden this demo by validating the session on each mount.
+// Add password reset callbacks to update the stored user record.
+// Consider a server-backed auth model for production security.
+// This demo is intentionally limited to browser-local state.
+// Example session note for the demo app.
+// Keep the auth flow easy to follow.
+// Use this file for local-only testing.
+// Expand this store before production use.
+// Replace with real auth when shipping.
