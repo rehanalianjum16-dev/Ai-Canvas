@@ -12,6 +12,7 @@ function getProviderConfig() {
   const openAIApiKey = process.env.OPENAI_API_KEY;
   const groqApiKey = process.env.GROQ_API_KEY;
   const openRouterApiKey = process.env.OPENROUTER_API_KEY;
+  const geminiApiKey = process.env.GEMINI_API_KEY;
 
   if (openAIApiKey) {
     return {
@@ -40,6 +41,15 @@ function getProviderConfig() {
     };
   }
 
+  if (geminiApiKey) {
+    return {
+      provider: 'gemini',
+      endpoint: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
+      apiKey: geminiApiKey,
+      model: process.env.GEMINI_MODEL || 'gemini-2.5-flash',
+    };
+  }
+
   return null;
 }
 
@@ -53,10 +63,9 @@ Your primary purpose is to:
 4. Suggest design improvements and canvas organization strategies
 
 Global language understanding:
-- Detect the user's language automatically from the message text and continue in that language whenever possible.
-- Support major world languages including English, Hindi, Urdu, Arabic, Spanish, French, Portuguese, German, Italian, Japanese, Korean, Chinese, Russian, and more.
-- If the user writes in any non-English language, answer naturally in that language instead of defaulting to English.
-- Even when the user uses mixed-language prompts, understand the intent and respond clearly in the most likely language.
+- Understand and respond naturally in the same language as the user's latest message, including mixed-language messages. If they explicitly request a response in another language, follow that request.
+- Support multilingual input across scripts, including English, Hindi, Urdu, Arabic, Spanish, French, Portuguese, German, Italian, Japanese, Korean, Chinese, Russian, and other languages you know.
+- Do not require users to translate canvas commands into English. Preserve user-provided labels and names in their original language.
 - Keep the response natural, not robotic, and preserve simple, action-focused wording.
 
 Canvas Capabilities You Can Assist With:
@@ -206,22 +215,28 @@ async function streamAIResponse(
     let fullContent = '';
     const reader = response.body?.getReader();
     const decoder = new TextDecoder();
+    let pending = '';
+    let streamFinished = false;
 
     if (!reader) {
       throw new Error('Unable to read response stream');
     }
 
-    while (true) {
+    while (!streamFinished) {
       const { done, value } = await reader.read();
       if (done) break;
 
-      const chunk = decoder.decode(value);
-      const lines = chunk.split('\n');
+      pending += decoder.decode(value, { stream: true });
+      const lines = pending.split('\n');
+      pending = lines.pop() || '';
 
       for (const line of lines) {
-        if (line.startsWith('data: ')) {
-          const data = line.slice(6);
-          if (data === '[DONE]') break;
+        if (line.startsWith('data:')) {
+          const data = line.slice(5).trim();
+          if (data === '[DONE]') {
+            streamFinished = true;
+            break;
+          }
 
           try {
             const parsed = JSON.parse(data);
@@ -232,6 +247,19 @@ async function streamAIResponse(
           } catch {
             // Skip parse errors for malformed JSON
           }
+        }
+      }
+    }
+
+    if (pending.startsWith('data:')) {
+      const data = pending.slice(5).trim();
+      if (data && data !== '[DONE]') {
+        try {
+          const parsed = JSON.parse(data);
+          const delta = parsed?.choices?.[0]?.delta?.content;
+          if (delta) fullContent += delta;
+        } catch {
+          // Ignore an incomplete trailing event.
         }
       }
     }
@@ -253,11 +281,31 @@ async function streamAIResponse(
 }
 
 export async function POST(request: Request) {
+  let body: any;
   try {
-    const body = await request.json();
-    const input = typeof body?.message === 'string' ? body.message.trim() : '';
-    const mode = (body?.mode || 'standard') as 'standard' | 'web' | 'document';
-    const history = Array.isArray(body?.history) ? body.history : [];
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: 'Request body must be valid JSON.' }, { status: 400 });
+  }
+
+  try {
+    if (!body || typeof body !== 'object' || Array.isArray(body)) {
+      return NextResponse.json({ error: 'Request body must be a JSON object.' }, { status: 400 });
+    }
+
+    const input = typeof body.message === 'string' ? body.message.trim() : '';
+    const mode = body.mode ?? 'standard';
+    if (!['standard', 'web', 'document'].includes(mode)) {
+      return NextResponse.json({ error: 'Unsupported chat mode.' }, { status: 400 });
+    }
+    const history = Array.isArray(body.history)
+      ? body.history.filter(
+          (msg: any): msg is ChatMessage =>
+            msg && typeof msg === 'object' &&
+            (msg.role === 'user' || msg.role === 'assistant') &&
+            typeof msg.content === 'string'
+        )
+      : [];
 
     if (!input) {
       return NextResponse.json(
@@ -269,9 +317,7 @@ export async function POST(request: Request) {
     // Build message array with conversation history
     const messages: ChatMessage[] = [
       { role: 'system', content: buildSystemPrompt(mode) },
-      ...history.filter(
-        (msg: any) => msg.role === 'user' || msg.role === 'assistant'
-      ),
+      ...history,
       { role: 'user', content: input },
     ];
 
@@ -286,16 +332,9 @@ export async function POST(request: Request) {
     return NextResponse.json(result);
   } catch (error) {
     console.error('Chat API failed:', error);
-    const body = await request.clone().json().catch(() => ({}));
-    const fallbackMessage = typeof body?.message === 'string' ? body.message : 'your request';
-
     return NextResponse.json(
-      {
-        response: createFallbackResponse(fallbackMessage),
-        mode: 'demo',
-        sources: [],
-      },
-      { status: 200 }
+      { error: 'Unable to process your message right now. Please try again.' },
+      { status: 500 }
     );
   }
 }

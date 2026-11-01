@@ -13,19 +13,40 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
   const router = useRouter();
 
   useEffect(() => {
-    initAuth();
+    try {
+      console.info('[AuthProvider] Initializing auth state');
+      initAuth();
+      console.info('[AuthProvider] Auth initialization complete');
+    } catch (error) {
+      console.error('[AuthProvider] Auth initialization failed', error);
+    }
   }, [initAuth]);
 
   useEffect(() => {
-    if (!isHydrated) return;
+    if (!isHydrated) {
+      console.info('[AuthProvider] Waiting for hydration to complete', { pathname });
+      return;
+    }
 
     const isPublicRoute = publicRoutes.includes(pathname);
+    console.info('[AuthProvider] Auth state ready', {
+      pathname,
+      isAuthenticated,
+      isPublicRoute,
+      role: currentUser?.role,
+    });
 
     if (!isAuthenticated && !isPublicRoute) {
+      console.warn('[AuthProvider] Redirecting unauthenticated user to login', { pathname });
       router.push('/login');
     } else if (isAuthenticated && isPublicRoute) {
+      console.info('[AuthProvider] Redirecting authenticated user away from public route', { pathname });
       router.push('/');
     } else if (pathname === '/admin' && currentUser?.role !== 'admin') {
+      console.warn('[AuthProvider] Admin route blocked for non-admin user', {
+        pathname,
+        currentRole: currentUser?.role,
+      });
       router.push('/');
     }
   }, [isHydrated, isAuthenticated, pathname, router, currentUser]);
