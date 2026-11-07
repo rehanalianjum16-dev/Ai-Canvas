@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Menu, Save, Download, Settings, User, Plus, Sparkles, Wrench, FolderOpen, Share2, MoreVertical, Copy, Trash2, Check, FileImage, FileText, LogOut, Shield } from 'lucide-react';
+import { Menu, Save, Download, Settings, User, Plus, Sparkles, Wrench, FolderOpen, Share2, MoreVertical, Copy, Trash2, Check, Bell, FileImage, FileText, LogOut, Shield } from 'lucide-react';
 import { useCanvasStore } from '../store/useCanvasStore';
 import { useAuthStore } from '../store/useAuthStore';
 import Link from 'next/link';
@@ -21,7 +21,18 @@ export default function TopNav() {
   const [isProjectsOpen, setIsProjectsOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [notificationsRead, setNotificationsRead] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
+
+  const notifications = [
+    'Your AI Canvas workspace is ready.',
+    'Create a project to organize a new idea.',
+    'Use the AI Chat panel to explore your canvas.',
+    'Export your work as a PNG or PDF when ready.',
+    'Share your canvas with collaborators.',
+    'Use Ctrl/Cmd+Z to undo canvas edits.',
+  ];
 
   useEffect(() => {
     loadProjects();
@@ -158,6 +169,45 @@ export default function TopNav() {
             <Sparkles size={16} />
             <span className="hidden sm:inline">AI Chat</span>
           </button>
+
+          <div className="relative">
+            <button
+              onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
+              aria-label="Notifications"
+              aria-expanded={isNotificationsOpen}
+              className="relative p-2 text-slate-600 hover:bg-slate-100 rounded-md transition-colors"
+            >
+              <Bell size={18} />
+              {!notificationsRead && <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-blue-600 ring-2 ring-white" />}
+            </button>
+
+            {isNotificationsOpen && (
+              <section role="region" aria-label="Workspace notifications" className="absolute right-0 top-full mt-2 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl z-[60]">
+                <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/80 px-4 py-3">
+                  <div>
+                    <h2 className="text-sm font-semibold text-slate-800">Notifications</h2>
+                    <p className="mt-0.5 text-xs text-slate-500">Tips to help you get started</p>
+                  </div>
+                  {!notificationsRead && (
+                    <button onClick={() => setNotificationsRead(true)} className="text-xs font-medium text-blue-600 hover:text-blue-700">
+                      Mark all read
+                    </button>
+                  )}
+                </div>
+                <ul className="max-h-80 overflow-y-auto divide-y divide-slate-100">
+                  {notifications.map((notification, index) => (
+                    <li key={notification} className="flex items-start gap-3 px-4 py-3 hover:bg-slate-50">
+                      <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${!notificationsRead && index === 0 ? 'bg-blue-500' : 'bg-slate-200'}`} />
+                      <p className="text-sm leading-5 text-slate-600">{notification}</p>
+                    </li>
+                  ))}
+                </ul>
+                <div className="border-t border-slate-100 px-4 py-2.5 text-center text-xs text-slate-400">
+                  You’re all caught up
+                </div>
+              </section>
+            )}
+          </div>
           
           <button 
             onClick={() => setIsRightPanelOpen(!isRightPanelOpen)}
