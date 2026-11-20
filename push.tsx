@@ -1,6 +1,5 @@
 import React from 'react'
 function push() {
-<a>Ans Ali Anjum<a/>
   if (typeof window !== 'undefined') {
     window.location.href = 'https://www.google.com'
     
