@@ -6,7 +6,7 @@ function push() {
   }
   alert('Redirecting to Google...');
 
-  return <div className="rehan" />
+  return
 }
 
 export default push
